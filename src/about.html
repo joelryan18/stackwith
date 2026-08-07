@@ -66,7 +66,7 @@ navCurrent: about
         <span class="ab-row__name">THE LOG</span>
         <span class="ab-row__desc">First-hand engineering notes from the workbench — implementation details, trade-offs, failure modes, and limitations.</span>
         <span class="ab-row__arrow" aria-hidden="true">→</span>
-        <span class="ab-row__meta">STATUS: PUBLISHING · 8 REPOSITORY-BACKED FIELD NOTES</span>
+        <span class="ab-row__meta">STATUS: PUBLISHING · {{ collections.posts | length }} REPOSITORY-BACKED FIELD NOTES</span>
       </a>
     </div>
     <p class="ab-rows__hint" data-abreveal aria-hidden="true">HOVER A CHANNEL — THE FIELD ANSWERS</p>
@@ -135,3 +135,30 @@ navCurrent: about
   <p class="ab-colophon__line"><span id="abColMach">0 STOCK ASSETS</span> · SOUND SYNTHESIZED IN-BROWSER · TYPE SET IN-WORLD</p>
   <p class="ab-colophon__note">Every figure above is checkable in this page's source. That is the whole point of us.</p>
 </div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://stackwith.me/about.html#author",
+  "name": "Joel Ryan",
+  "url": "https://stackwith.me/about.html",
+  "description": "Independent software builder. Joel Ryan designs, codes, tests, and documents browser projects at stackwith.me — including WebGL experiences, multiplayer games, and first-hand engineering notes.",
+  "knowsAbout": [
+    "WebGL", "Three.js", "Browser software", "JavaScript",
+    "Performance engineering", "Eleventy", "Supabase"
+  ],
+  "worksFor": {
+    "@type": "Organization",
+    "name": "stackwith.me",
+    "url": "https://stackwith.me"
+  },
+  "mainEntityOfPage": "https://stackwith.me/about.html",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "general enquiry",
+    "email": "hello@stackwith.me",
+    "url": "https://stackwith.me/contact.html"
+  }
+}
+</script>
