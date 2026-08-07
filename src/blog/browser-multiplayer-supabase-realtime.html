@@ -1,0 +1,104 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "Building real-time multiplayer in the browser with Supabase Realtime — stackwith.me"
+headline: "Building real-time multiplayer in the browser with Supabase Realtime"
+description: "How Signal Strike implements browser-based multiplayer using Supabase Realtime broadcast and presence — host authority, snapshot interpolation, wire message validation, and the exact two-tab test setup."
+excerpt: "The architecture behind Signal Strike's online co-op: how Supabase broadcast+presence replaces a game server, how one client becomes the host authority, and the validation rules that keep the wire safe."
+category: "Architecture & networking"
+searchTerms: "Supabase Realtime multiplayer browser game WebSocket broadcast presence host authority snapshot interpolation"
+readingTime: 10
+published: "2026-08-05"
+modified: "2026-08-05"
+permalink: "blog/browser-multiplayer-supabase-realtime.html"
+---
+<p>Signal Strike supports up to four human players in the same match, with bots filling the remaining roster to a full twelve. The multiplayer layer uses Supabase Realtime — specifically its <code>broadcast</code> and <code>presence</code> channels — with no dedicated game server. One browser tab is the authoritative host; the others are peers. This note explains how that architecture works, what makes it viable for a browser game, and where it falls short.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#transport">Transport choice</a></li>
+    <li><a href="#authority">Host authority</a></li>
+    <li><a href="#wire">Wire messages</a></li>
+    <li><a href="#snapshots">Snapshot interpolation</a></li>
+    <li><a href="#validation">Validation and security</a></li>
+    <li><a href="#testing">Testing two tabs</a></li>
+    <li><a href="#limits">Limits of this architecture</a></li>
+  </ul>
+</nav>
+
+<h2 id="transport">Transport choice</h2>
+<p>Supabase Realtime provides two primitives over a single WebSocket connection: <code>broadcast</code> (fire-and-forget messages to all other subscribers on a named channel) and <code>presence</code> (a CRDT-based state sync where each client tracks a small state object and sees when others join or leave).</p>
+<p>This is enough for a game with these properties: up to four humans, no persistent server-side game state, and favor-the-shooter hit detection. A traditional authoritative game server would add sub-20ms latency and deterministic anti-cheat guarantees that a browser demo does not need to meet.</p>
+<p>The same game logic runs through two other transport adapters for testing: <code>BroadcastChannel</code> (same-browser, two-tab), and a scripted stub that simulates a second peer without any network. All three adapters implement the same <code>send(type, data)</code> and <code>onMessage(handler)</code> interface, so the game logic never directly references Supabase.</p>
+
+<h2 id="authority">Host authority</h2>
+<p>The host is determined by the earliest join time. Each client tracks a <code>joinT</code> timestamp when it enters the Supabase presence channel. When the presence state changes — someone joins or leaves — every client computes <code>Math.min(...peers.map(p => p.joinT))</code> and the client with the minimum join time is the host.</p>
+<p>The host runs three things the peers do not:</p>
+<ul>
+  <li><b>Bot AI and bot positions</b> — broadcast to peers at 8 Hz via <code>bs</code> (bot state) messages.</li>
+  <li><b>Storm / zone contraction</b> — broadcast at 2 Hz via <code>st</code> messages.</li>
+  <li><b>Score authority</b> — in Team Deathmatch, the host accumulates kills from all kill messages and broadcasts the authoritative score at 2 Hz plus on every kill event.</li>
+</ul>
+<p>When the host leaves, every remaining client recomputes the host independently (they all have the same presence data) and the new host starts running bots and storm from the next tick. This is called silent promotion — no coordination message is needed because the election algorithm is deterministic and shared.</p>
+<pre><code>const recomputeHost = () => {
+  const all = [...NET.peers.values(), NET.self];
+  all.sort((a, b) => a.joinT - b.joinT);
+  const wasHost = NET.amHost;
+  NET.amHost = all[0].id === NET.self.id;
+  if (NET.amHost && !wasHost) assumeHostAuthority();
+};</code></pre>
+
+<h2 id="wire">Wire messages</h2>
+<p>The wire protocol is a set of typed message objects sent via broadcast. Each has a <code>type</code> field and a payload. The key messages are:</p>
+<div class="doc__card">
+  <ul>
+    <li><b>snap</b> — position snapshot for a player: <code>{id, x, y, z, rx, ry, rz, vel, pt}</code> at 10 Hz.</li>
+    <li><b>shot</b> — a fired shot: <code>{id, tx, ty, tz, d, w, bid}</code>. <code>d</code> is a boolean flag for high-damage weapons; <code>w</code> is the weapon index; <code>bid</code> identifies the shooter.</li>
+    <li><b>hit</b> — a successful hit: <code>{bid, tid, dmg, hp}</code>. The shooter broadcasts this; the target adopts the HP value.</li>
+    <li><b>died</b> — death notification: <code>{bid, kt}</code> where <code>kt</code> is the killer's team ID.</li>
+    <li><b>bs</b> — host-broadcast bot state array.</li>
+    <li><b>sc</b> — score update from host: <code>{a, b, mt, fin}</code>.</li>
+  </ul>
+</div>
+<p>The design is favor-the-shooter: the shooter's client determines whether a shot landed and broadcasts the hit. Peers accept hit messages from any client without re-validating the geometry. This gives snappy local feedback at the cost of being exploitable in a competitive context — which is acceptable for a browser demo but not for a ranked game.</p>
+
+<h2 id="snapshots">Snapshot interpolation</h2>
+<p>Each client broadcasts its position at 10 Hz. Peers receive these at irregular intervals depending on network conditions. Rendering the received position directly produces jitter. Interpolation fixes this by maintaining a small buffer of the last two snapshots and rendering the interpolated position at a fixed lag behind the leading edge.</p>
+<p>The interpolation fraction is calculated as:</p>
+<pre><code>// dt = frame delta time; lag = 100ms interpolation window
+peerState.interpT += dt;
+const t = Math.min(peerState.interpT / lag, 1.0);
+peerRig.position.lerpVectors(peerState.prevSnap.pos, peerState.currSnap.pos, t);</code></pre>
+<p>When a new snapshot arrives, <code>prevSnap</code> becomes <code>currSnap</code> and the new data becomes <code>currSnap</code>, and <code>interpT</code> resets to zero. This produces smooth interpolated movement even with 200 ms packet spacing.</p>
+<p>Velocity Y is also interpolated via the same mechanism, so airborne peers look correctly affected by gravity rather than teleporting vertically.</p>
+
+<h2 id="validation">Validation and security</h2>
+<p>Without a server, the wire is effectively public — any client can send any message to the channel. The validation layer defends against accidental errors (a client sending a NaN position) and prevents obviously broken state from corrupting the simulation:</p>
+<ul>
+  <li>All numeric fields in snap messages are gated by <code>Number.isFinite()</code>. A NaN or Infinity in a position snaps the peer to (0,0,0) rather than breaking the scene graph.</li>
+  <li>Damage values in hit messages are clamped to <code>saneDmg = 220</code> — the maximum possible from a shotgun hitting all pellets at full damage. Any message claiming more than that is clamped before application.</li>
+  <li>Player names from presence data are run through a <code>feedName(s)</code> sanitiser before being inserted as innerHTML in the kill feed.</li>
+  <li>The peers map is capped at 16 entries. A client that creates many presence entries cannot allocate unbounded memory.</li>
+</ul>
+
+<h2 id="testing">Testing two tabs</h2>
+<p>The most reliable way to integration-test a multiplayer game is to run two real browser tabs with a shared room code. Doing this headlessly via CDP requires several non-obvious setup steps:</p>
+<ul>
+  <li>Each tab must be created in its own browser context (<code>Target.createBrowserContext</code>) so they do not share localStorage or IndexedDB. Two tabs in the same context would have the same Supabase session token and appear as the same user.</li>
+  <li>All three of <code>--disable-background-timer-throttling</code>, <code>--disable-renderer-backgrounding</code>, and <code>--disable-backgrounding-occluded-windows</code> must be passed to Chrome. Without these, the unfocused tab's <code>requestAnimationFrame</code> loop stops, the glider never lands, and position snapshots freeze mid-air.</li>
+  <li>Tracking fire (re-aiming at the target every 90ms while holding the trigger) is more reliable than a single aimed shot for hit registration tests, because a bot orbiting at 10 m/s moves about 0.9 m per frame at 10 fps, which exceeds the hitscan tolerance of a single aim.</li>
+</ul>
+<p>The two-tab QA driver (<code>/tmp/game-squad-v4-qa.mjs</code>) covers: room creation and auto-join via the invite link, presence sync showing two players, host election, match start, snapshot flow, score sync from host to guest, guest respawn visible to host, and room shrink on tab close.</p>
+
+<h2 id="limits">Limits of this architecture</h2>
+<div class="doc__card">
+  <p>This architecture is designed for a browser demo, not a competitive title. The specific limits are:</p>
+  <ul>
+    <li><b>No cheat prevention.</b> The shooter determines hits. Any client can broadcast false hit messages.</li>
+    <li><b>Host advantage.</b> The host runs at zero latency for bot decisions. A peer fighting a bot is receiving positions that are 50–200ms stale.</li>
+    <li><b>No reconnection.</b> If a client loses its WebSocket connection, it cannot rejoin the same match. There is no state snapshot to resume from.</li>
+    <li><b>Supabase message limits.</b> Free-tier Supabase Realtime has rate limits. A 12-player match broadcasting at 10 Hz generates around 1,440 messages per minute, which can hit those limits under stress.</li>
+  </ul>
+</div>
+<p>These are documented trade-offs, not accidental gaps. The nice-to-have list for a production implementation would include server-side validation, reconnection tokens, and a proper lag compensation model. A browser demo for a portfolio site does not need any of those things to be valuable or honest about what it is.</p>

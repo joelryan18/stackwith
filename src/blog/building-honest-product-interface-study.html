@@ -1,0 +1,82 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "Building an honest product interface study: design without deception — stackwith.me"
+headline: "Building an honest product interface study: design without deception"
+description: "How AXON separates a working interface from a claimed product, what makes a design showcase dishonest by default, and the specific techniques used to label every simulated element while still producing a persuasive design."
+excerpt: "A first-hand account of building AXON as an interface study rather than a product landing page — the copy rules, the disclosure patterns, and the design techniques that keep the demo honest without making it boring."
+category: "Design & product"
+searchTerms: "product design interface study honest copy design showcase AXON transparency disclosure UI design ethics"
+readingTime: 8
+published: "2026-08-07"
+modified: "2026-08-07"
+permalink: "blog/building-honest-product-interface-study.html"
+---
+<p>Most product landing pages show a beautifully animated interface that implies a working product. The interface usually is working — the animations run, the buttons respond, the trace console scrolls. What is not working is the backend: the orchestration service, the reasoning engine, the connectors to external APIs. The page presents a demo and lets the visitor conclude the rest.</p>
+<p>AXON was built to show what an inspectable agent product interface could look like, which means it needed to solve a design problem specific to showcases: how do you make a compelling, polished interface study that is also perfectly clear about what it is and is not? This post documents the specific techniques used and the exact copy rules applied.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#default-dishonesty">The default dishonesty of demos</a></li>
+    <li><a href="#three-failure-modes">Three failure modes</a></li>
+    <li><a href="#copy-rules">The copy rules</a></li>
+    <li><a href="#disclosure-patterns">Disclosure patterns in the interface</a></li>
+    <li><a href="#honesty-improves">Why honesty improves the design</a></li>
+    <li><a href="#the-test">The test</a></li>
+  </ul>
+</nav>
+
+<h2 id="default-dishonesty">The default dishonesty of demos</h2>
+<p>The problem is not that product demos show polished interfaces. The problem is that they rarely disclose what is simulated, what is scripted, and what is live. When a metrics panel shows "99.7% uptime" and "42ms average latency" on a demo, the visitor has no way to know whether those numbers are measured from a real deployment or typed into a JSON file. The interface design borrows credibility from production operations it does not have.</p>
+<p>This matters less for a mature product with a verifiable track record. It matters a lot for an interface study for a product that does not exist yet — or for a design showcase on a portfolio site. A visitor who is a potential collaborator, employer, or client will eventually discover the gap. The disclosure should come from the page, not from their own investigation.</p>
+<blockquote>A demo that does not label itself as a demo is making an implicit product claim. The absence of a disclaimer is itself a statement.</blockquote>
+<p>The original AXON page had this problem. It showed a reasoning trace console, latency metrics, connector count, and uptime figures without explicitly stating that these were design targets and simulated examples. The copy sounded like a product with users — "sub-40ms orchestration", "production-ready guardrails" — when there was no production deployment behind any of it.</p>
+
+<h2 id="three-failure-modes">Three failure modes</h2>
+<p>Three specific failure modes were found in the first AXON draft:</p>
+<ol>
+  <li><b>Simulated metrics presented as benchmarks.</b> "Sub-40ms orchestration" was styled identically to a product specification sheet. There was nothing visually or typographically indicating that this was a design target rather than a measured result. The <a href="/blog/engineering-sub-40ms-orchestration.html">latency budget post</a> documents how this was corrected — keeping the number while changing the qualifier to "design target."</li>
+  <li><b>Demo content presented as user data.</b> The reasoning trace console showed example entries in first-person — "Analysing payment record for user account 7821..." — formatted as if this were captured from a live agent run. There was no disclaimer that the content was authored for demonstration. A reader who did not know to look for it would assume these were real traces.</li>
+  <li><b>Capability claims that assume the backend exists.</b> "AXON monitors and responds to events across your connected services" implies an operational product with real connectors, a real event stream, and real response logic. The page was describing a concept as if it were a deployed service.</li>
+</ol>
+<p>None of these failures required intentional deception — they were the natural result of writing product copy for an interface that was built to look like a product. The copy defaults to the language of shipping software, and that language implies a backend.</p>
+
+<h2 id="copy-rules">The copy rules</h2>
+<p>Four copy rules were applied to every claim on the page:</p>
+<div class="doc__card">
+  <ul>
+    <li><b>Every metric has a qualifier.</b> "Sub-40ms orchestration" became "sub-40ms design target." "99.7% uptime" became "target uptime for a production deployment." The number is retained — it is still useful as a design constraint — but the qualifier removes the implicit claim of measurement.</li>
+    <li><b>First-person user data is replaced with labelled examples.</b> "Analysing payment record for user account 7821" became a clearly labelled simulated trace entry. The SIMULATED label appears in the console header, not in a footnote.</li>
+    <li><b>Capability claims are re-scoped to the interface.</b> "AXON monitors events across your connected services" became "this interface study explores how an event-monitoring product could present its state." The sentence describes the design exercise, not the production capability.</li>
+    <li><b>The supporter pass tiers are explicit about what they do not include.</b> Every pricing tier on the page includes the line "No agent software or usage entitlement." The pass supports the workshop and delivers a digital download — nothing else. See the <a href="/blog/guardrails-are-a-feature.html">guardrails post</a> for why this level of scoping matters even in a non-technical context.</li>
+  </ul>
+</div>
+<p>These rules were applied retroactively — the draft was rewritten clause by clause. Some copy that sounded natural and compelling in the original had to be either removed or substantially reworded. A few features that existed only as design concepts were removed from the page entirely rather than described as coming soon.</p>
+
+<h2 id="disclosure-patterns">Disclosure patterns in the interface</h2>
+<p>Disclosure text in a tooltip or a terms-of-use modal is invisible in practice. The disclosures on AXON are designed to be encountered in normal use:</p>
+<ul>
+  <li><b>The console header.</b> The reasoning trace console is headed with "SIMULATED TRACE — EXAMPLE ONLY." This is part of the component, not an aside. A visitor who spends time reading the console will read this label before or alongside the trace entries.</li>
+  <li><b>The datasheet "CONCEPT BEHAVIOR" column.</b> The feature specification table has an explicit column labelled CONCEPT BEHAVIOR for capabilities that are design targets. The label appears on the same row as the capability — not in a footer note.</li>
+  <li><b>The plan tier disclaimer card.</b> Each supporter-pass pricing tier includes a small card with the full plain-language disclaimer about what the pass includes and what it does not. This is not styled as fine print — it uses the same card component as feature callouts.</li>
+  <li><b>Body class honesty markers.</b> The smoke suite asserts that the body class <code>axon-live</code> is NOT set on the page (it is not) and that specific disclosure strings appear verbatim in the page body. If the copy changes in a way that removes a disclosure, a smoke test fails and the deploy is blocked.</li>
+</ul>
+<p>The smoke-pinned strings are worth noting: the CI test literally checks that the phrases "Autonomy needs an audit trail" and "no autonomous-agent software is provided" appear in the delivered HTML. This treats honest copy as a technical requirement rather than an editorial aspiration.</p>
+
+<h2 id="honesty-improves">Why honesty improves the design</h2>
+<p>Counterintuitively, the interface study framing creates more design freedom than a conventional product page would allow. On a product page, every interface element either needs to represent something real or needs to be removed. On an interface study, you can show the idealised form of the interface — the one where the UX is exactly right, the information hierarchy is clear, the interaction model is fully thought through — because you are showing what the product <em>should</em> look like, not what the current iteration delivers.</p>
+<blockquote>An interface study is a hypothesis about what the product should be. A product page is a description of what the product is. These require different design decisions and different honesty standards.</blockquote>
+<p>The disclosure also becomes a differentiator. In a space where most automation product pages make superlative claims without qualifiers, a page that explicitly labels its design targets and simulated content stands out. It signals to the reader that the design work can be evaluated on its own terms — not because there is no backend, but because the designer is not hiding that fact.</p>
+
+<h2 id="the-test">The test</h2>
+<p>The practical test for an honest interface study: would a careful reader who reads every word on every page know exactly what is and is not live?</p>
+<p>For AXON, the answer is yes on the following points:</p>
+<ul>
+  <li>The console is a simulated trace — the header says so.</li>
+  <li>The latency figure is a design target — the copy says "design target" on the same line.</li>
+  <li>The supporter pass does not include access to agent software — the plan card says so.</li>
+  <li>The interface is a design showcase — the About page's description of AXON says so in the first sentence.</li>
+</ul>
+<p>The test also reveals what still requires care: the visual design of the interface is persuasive — it looks like a live product because that is a correct interface study for a product that should look operational. The persuasion is in the design; the honesty is in the copy and disclosure. These are meant to coexist, not to cancel each other out.</p>
+<p>The <a href="/blog/why-automation-needs-an-audit-trail.html">audit trail post</a> applies the same principle to the product concept itself: if you are building a system that makes decisions, the interface should make those decisions inspectable. Disclosure at the product-copy level is just a version of that same principle applied to the page that describes the product.</p>

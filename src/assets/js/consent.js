@@ -1,24 +1,26 @@
-/* AXON — consent.js · cookie-consent banner + consent-gated AdSense loader
-   The AdSense script is ONLY injected after explicit "Accept all" consent
-   (or a stored "all" choice from a previous visit). "Essential only" never
-   loads it. Not a full IAB TCF CMP — see README "Consent architecture". */
+/* AXON — consent.js · cookie-consent banner + Google Consent Mode v2 updater
+   The AdSense script loads unconditionally in base.njk for site verification.
+   This module gates AD PERSONALISATION: default is 'denied' (set in base.njk
+   before the script); accepting here calls gtag('consent','update',{granted}).
+   "Essential only" leaves personalisation denied — Google serves non-personalised
+   ads, which is the correct GDPR posture without full IAB TCF consent. */
 (() => {
   "use strict";
-  const ADS_CLIENT = "ca-pub-7262404901375077";
 
-  const loadAds = () => {
-    if (document.getElementById("adsbygoogle-js")) return;
-    const s = document.createElement("script");
-    s.id = "adsbygoogle-js";
-    s.async = true;
-    s.crossOrigin = "anonymous";
-    s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + ADS_CLIENT;
-    document.head.appendChild(s);
+  const grantAll = () => {
+    if (typeof gtag === "function") {
+      gtag("consent", "update", {
+        ad_storage: "granted",
+        ad_user_data: "granted",
+        ad_personalization: "granted",
+        analytics_storage: "granted",
+      });
+    }
   };
 
   let stored = null;
   try { stored = localStorage.getItem("axon-consent"); } catch (e) { /* private mode */ }
-  if (stored === "all") loadAds();
+  if (stored === "all") grantAll();
   if (stored) return;
 
   const bar = document.createElement("aside");
@@ -27,7 +29,7 @@
   bar.setAttribute("aria-label", "Cookie consent");
 
   const msg = document.createElement("p");
-  msg.append("[ COOKIES ] We use cookies to analyse traffic and, with your consent, to serve ads. Details in our ");
+  msg.append("[ COOKIES ] We use cookies to analyse traffic and, with your consent, to serve personalised ads. Details in our ");
   const link = document.createElement("a");
   link.href = "/privacy.html";
   link.textContent = "Privacy Policy";
@@ -42,7 +44,7 @@
     b.textContent = label;
     b.addEventListener("click", () => {
       try { localStorage.setItem("axon-consent", val); } catch (e) { /* ignore */ }
-      if (val === "all") loadAds();
+      if (val === "all") grantAll();
       bar.remove();
     });
     return b;

@@ -1,0 +1,98 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "Synthesizing game audio in the browser without audio files — stackwith.me"
+headline: "Synthesizing game audio in the browser without audio files"
+description: "How Signal Strike and Deep Signal build a complete game audio system using only the Web Audio API — no samples, no assets, just oscillators, filters, envelopes, and voice management."
+excerpt: "A breakdown of the synthesis approach used in this site's game and lab projects: drone beds, pentatonic chimes, gunshot noise bursts, and how to keep latency low with careful voice management."
+category: "Audio & browser APIs"
+searchTerms: "Web Audio API synthesis game audio oscillators filters envelopes voice management browser sound"
+readingTime: 10
+published: "2026-07-30"
+modified: "2026-08-05"
+permalink: "blog/synthesizing-game-audio-web-audio-api.html"
+---
+<p>Signal Strike and Deep Signal both have dynamic soundscapes — a panning gunshot crack, a crystal chime that drops an octave when you strike near a stone ruin, a continuous drone whose filter frequency tracks how deep into the shaft you have descended. None of it uses audio files. Every sound is synthesised in real time by the Web Audio API, starting from oscillators and noise generators.</p>
+<p>This note explains the architecture used: how the audio graph is organised, why voice management matters more than synthesis quality, and the specific techniques that make each sound work without samples.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#graph">The audio graph</a></li>
+    <li><a href="#drone">The drone bed</a></li>
+    <li><a href="#chimes">Crystal chimes</a></li>
+    <li><a href="#gunshots">Gunshot synthesis</a></li>
+    <li><a href="#voices">Voice management</a></li>
+    <li><a href="#autoplay">Autoplay policy</a></li>
+  </ul>
+</nav>
+
+<h2 id="graph">The audio graph</h2>
+<p>The Web Audio API organises sound as a directed acyclic graph of nodes. Source nodes generate audio — oscillators, noise buffers, or decoded PCM. Processing nodes transform it — filters, gains, panners, analysers. Everything routes to <code>AudioContext.destination</code>, which is the speaker output.</p>
+<p>The key discipline is to build and destroy subgraphs rather than routing everything through a persistent master graph. For one-shot sounds like gunshots and chimes, a new subgraph is constructed per event, plays to completion, and disconnects itself via an <code>onended</code> callback. This avoids accumulating silent but connected nodes that continue to consume CPU.</p>
+<pre><code>const ctx = new AudioContext();
+
+// One-shot subgraph pattern
+const playChime = (freq, pan, gain) => {
+  const osc = ctx.createOscillator();
+  const filt = ctx.createBiquadFilter();
+  const panner = ctx.createStereoPanner();
+  const env = ctx.createGain();
+
+  osc.connect(filt).connect(env).connect(panner).connect(ctx.destination);
+
+  osc.frequency.value = freq;
+  filt.type = "lowpass";
+  filt.frequency.value = 2600;
+  panner.pan.value = pan;
+  env.gain.setValueAtTime(gain, ctx.currentTime);
+  env.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.95);
+
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.95);
+  osc.onended = () => { osc.disconnect(); filt.disconnect(); env.disconnect(); panner.disconnect(); };
+};</code></pre>
+
+<h2 id="drone">The drone bed</h2>
+<p>Deep Signal's persistent drone is a 48 Hz sine oscillator — below the nominal A1 on a standard tuning — routed through a bandpass filter whose frequency is automated with chapter progress. As the camera descends through five chapters, the filter cutoff drops from about 900 Hz at the surface to 320 Hz at the core, making the air feel progressively heavier and more enclosed.</p>
+<p>A second partial at 2.997× the fundamental (approximately a perfect fifth plus an octave) is mixed in at about −14 dB relative to the root. The non-integer ratio means the partial slowly drifts in and out of phase with the fundamental, producing a gentle beating that makes the drone feel alive without an LFO. The beating rate depends on the exact ratio — 2.997 gives about one beat per 3.3 seconds at 48 Hz, which sits comfortably below conscious perception.</p>
+<p>The drone also drives the chime tuning. When a wall strike fires a chime, its pitch is determined by the azimuth of the strike point around the shaft, quantised to the pentatonic minor scale. The root of that scale is the drone's 48 Hz — so every chime is harmonically consistent with the ambient bed regardless of where in the shaft the camera sits.</p>
+
+<h2 id="chimes">Crystal chimes</h2>
+<p>A chime triggered by a wall strike uses a sine oscillator plus a first partial at 2.997×, both routed through a lowpass filter at 2600 Hz and into a stereo panner. The pan position maps linearly from the horizontal position of the strike point on screen — a strike at the far left of the viewport pans to about −0.7, a strike at the far right to +0.7.</p>
+<p>Octave assignment is based on the vertical position of the strike. Near the surface (y &gt; −12) the fundamental sounds at full pitch. Below the vein (y &lt; −30) it drops two octaves. The drop is implemented simply by halving or quartering the frequency, which keeps the tuning consistent with the drone root.</p>
+<p>The stone remnants — the Cradle, the shattered Gate, the spiral stair slabs — respond to strikes within their radius with a different timbre: the same sine oscillator but at exactly one octave below the standard chime, and with a longer exponential decay (1.6 s vs 0.95 s). This gives the stone a heavier, more resonant quality that distinguishes it from the crystal without requiring a different synthesis strategy.</p>
+
+<h2 id="gunshots">Gunshot synthesis</h2>
+<p>Gunshots in Signal Strike are built from three layers combined into a short transient envelope:</p>
+<ol>
+  <li><b>Noise burst.</b> A <code>AudioBufferSourceNode</code> filled with white noise, routed through a bandpass filter centred around 800 Hz to give it body without low-end mud. The gain envelope is a very fast attack (1 ms) and exponential decay (80 ms).</li>
+  <li><b>Sub thump.</b> A 55 Hz sine oscillator with a 4 ms attack and 120 ms exponential decay. This is what makes a rifle feel like it has weight — the sub gives physical impact to what would otherwise be a thin crack.</li>
+  <li><b>Click transient.</b> A 1 ms burst of full-gain noise before the main envelope. This is the initial pressure wave that the ear perceives as the "crack" of the shot, distinguished from the body of the sound. Without it, gunshots feel soft-started and unconvincing.</li>
+</ol>
+<p>The kick amount for recoil is separately encoded in the weapon definition and drives camera trauma (a squared-response screen shake), not the audio. The two are intentionally decoupled so that a weapon can feel heavy on screen without sounding heavy, or vice versa.</p>
+
+<h2 id="voices">Voice management</h2>
+<p>The practical limit for concurrent Web Audio voices is somewhere between 16 and 64 depending on the device, before audio glitches or significant CPU cost appear. A first-person shooter with 12 bots all firing simultaneously can easily exceed that without a voice budget.</p>
+<p>The approach used here is a simple fixed-size ring buffer of voices per sound type. For gunshots, a pool of six voice slots is maintained. When a new shot fires, it claims the next slot, stopping whatever was in that slot if it was still active. This means an extremely rapid-fire weapon can clip its own tail — which is actually correct for automatic weapons where successive shots mask the previous tail anyway.</p>
+<pre><code>const VOICE_POOL = 6;
+let voiceIdx = 0;
+const pool = [];
+
+const claimVoice = () => {
+  const idx = voiceIdx % VOICE_POOL;
+  voiceIdx++;
+  if (pool[idx]) {
+    pool[idx].osc?.stop();
+    pool[idx].noise?.stop();
+    pool[idx].disconnect();
+  }
+  // Build new subgraph here, store in pool[idx]
+  return idx;
+};</code></pre>
+<p>Chimes use a different policy: a maximum of six concurrent voices with a minimum inter-trigger time of 110 ms. If a strike arrives while six voices are already active, it is silently dropped. This prevents a rapid sweep along the wall from spiking to dozens of voices and causing glitches — the cascade effect still sounds correct because echoes at 120 ms and 220 ms spacing fill in the tail.</p>
+
+<h2 id="autoplay">Autoplay policy</h2>
+<p>Modern browsers suspend a new AudioContext until a user gesture has occurred. The practical consequence is that the AudioContext must be created (or resumed) inside an event handler, not at page load.</p>
+<p>Both projects address this by creating the AudioContext lazily on the first pointer interaction. For lab.html, this means the SND toggle button is what initialises audio — clicking it both enables sound and resumes the context. The QA smoke suite therefore always clicks the SND pill before asserting on audio state.</p>
+<p>Signal Strike resumes the context on the first pointer lock event, which is the natural first interaction for a game. The context starts in <code>suspended</code> state; <code>ctx.resume()</code> is called in the pointer lock handler and the result is awaited before any sound is triggered.</p>

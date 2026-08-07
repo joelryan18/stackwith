@@ -16,7 +16,7 @@ noindex: true
 
         <div class="paymodal__stage" data-stage="auth" hidden>
           <h4 class="paymodal__subtitle">Sign in to continue</h4>
-          <p class="paymodal__hint">Your Supporter Pass is issued against your account email.</p>
+          <p class="paymodal__hint">Your optional supporter pass is issued against your account email. It does not unlock agent software.</p>
           <div class="payauth">
             <button type="button" class="btn btn--ghost payauth__btn" data-auth="google"><span class="payauth__tag">[ G ]</span> Continue with Google</button>
             <button type="button" class="btn btn--ghost payauth__btn" data-auth="github" disabled><span class="payauth__tag">[ GH ]</span> Continue with GitHub<span class="payauth__soon">soon</span></button>
@@ -39,7 +39,7 @@ noindex: true
             <input type="text" id="payName" name="name" placeholder="Full name" aria-label="Full name" autocomplete="name" required minlength="2" />
             <input type="email" id="payEmail" name="email" placeholder="you@company.com" aria-label="Email address" autocomplete="email" required readonly />
             <input type="tel" id="payPhone" name="phone" placeholder="Phone (10 digits)" aria-label="Phone number" autocomplete="tel" required pattern="[0-9+ -]{10,15}" />
-            <p class="paymodal__note">AXON is a design showcase. This is a genuine <span id="payNoteAmount">₹—</span> payment for an AXON Supporter Pass, delivered by email — no software product is provided.</p>
+            <p class="paymodal__note"><b>Important:</b> AXON is a design showcase, not an operational agent product. This is a genuine <span id="payNoteAmount">₹—</span> one-time payment supporting Joel Ryan's workshop. You receive the digital supporter pass and only the benefits listed here; no autonomous-agent software is provided.</p>
             <p class="paymodal__err" id="payErr" role="alert" hidden></p>
             <button type="submit" class="btn btn--signal" id="payBtn" data-probe="PAY">Pay ₹—</button>
           </form>

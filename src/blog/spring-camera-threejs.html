@@ -1,0 +1,117 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "Spring-physics cameras in Three.js: smooth scroll-driven movement without lerp artifacts — stackwith.me"
+headline: "Spring-physics cameras in Three.js: smooth scroll-driven movement without lerp artifacts"
+description: "How Deep Signal's camera achieves natural, weighty movement through a five-chapter descent using a damped spring instead of a simple lerp — and why lerp alone always feels mechanical at low scroll velocities."
+excerpt: "A breakdown of the spring-physics camera used in Deep Signal: the damped harmonic oscillator math, how it differs from lerp, and the constants that make a crystal shaft feel genuinely weighty to scroll through."
+category: "Three.js & rendering"
+searchTerms: "Three.js camera spring physics smooth scrolling lerp damped harmonic oscillator WebGL camera animation scroll"
+readingTime: 9
+published: "2026-08-06"
+modified: "2026-08-06"
+permalink: "blog/spring-camera-threejs.html"
+---
+<p>A scroll-driven Three.js camera that simply lerps toward its target — <code>camera.position.y += (target.y - camera.position.y) * 0.05</code> — has a characteristic problem: it slows exponentially as it approaches the destination. The last ten percent of the travel takes as long as the first fifty. At low scroll velocities, the camera feels stuck. At high velocities it feels floaty, because it overshoots gracefully but decelerates without any weight.</p>
+<p>Deep Signal's camera uses a damped spring instead. The spring produces a natural arrival with a single visible overshoot and then settles — the same physical feel as a camera weighted on a good dolly track. This post explains the implementation, the constants chosen, and why frame-rate independence requires more care with a spring than with a lerp.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#lerp-problem">The lerp problem</a></li>
+    <li><a href="#spring-math">The damped spring equations</a></li>
+    <li><a href="#constants">Choosing the constants</a></li>
+    <li><a href="#chapter-stops">Chapter stops and scroll input</a></li>
+    <li><a href="#frame-rate">Frame-rate independence</a></li>
+    <li><a href="#qa-gotcha">The QA gotcha</a></li>
+  </ul>
+</nav>
+
+<h2 id="lerp-problem">The lerp problem</h2>
+<p>The standard smooth-follow pattern — multiply the gap by a small coefficient each frame — is sometimes called "lerp easing" but it is actually exponential decay. Each frame closes a fixed percentage of the remaining gap. When 95% of the gap has closed, closing another 5% moves the camera barely at all.</p>
+<p>This creates two problems:</p>
+<ul>
+  <li><b>The camera never arrives.</b> Mathematically, exponential decay asymptotically approaches zero but never reaches it. In practice, floating point rounds to zero eventually, but the visual effect is a camera that decelerates to an imperceptible crawl for the last few frames rather than arriving cleanly.</li>
+  <li><b>Coefficient changes with frame rate.</b> A coefficient of 0.055 at 60fps gives a very different feel at 8fps (SwiftShader) or 120fps. The effective settling time is tied to the number of frames, not wall-clock seconds.</li>
+</ul>
+<blockquote>A lerp coefficient is not a physical constant. It is a per-frame multiplier that produces completely different behaviour across frame rates without obvious debugging symptoms.</blockquote>
+<p>The correct frame-rate-independent lerp uses <code>1 - pow(1 - alpha, dt * 60)</code> as the coefficient, scaling alpha by the elapsed time. But once you are doing that, a damped spring is not much more complex and produces a far more natural result.</p>
+
+<h2 id="spring-math">The damped spring equations</h2>
+<p>A damped spring tracks position and velocity. Each frame, the spring force accelerates the velocity toward the target, and damping reduces velocity over time:</p>
+<pre><code>// Spring state — persists between frames
+const spring = { pos: 0, vel: 0 };
+
+function stepSpring(spring, target, dt) {
+  const STIFFNESS = 12;    // spring constant — higher = snappier
+  const DAMPING = 0.0015;  // per-second velocity multiplier (&lt; 1 = decay)
+
+  // Spring force: proportional to displacement
+  const force = (target - spring.pos) * STIFFNESS;
+  spring.vel += force * dt;
+
+  // Damping: exponential decay, frame-rate independent
+  spring.vel *= Math.pow(DAMPING, dt);
+
+  spring.pos += spring.vel * dt;
+  return spring.pos;
+}</code></pre>
+<p>The critical line is <code>Math.pow(DAMPING, dt)</code>. This is the frame-rate-independent form of velocity damping. The simpler form <code>spring.vel *= (1 - DAMPING * dt)</code> produces different damping ratios at different frame rates — at 8fps it damps far more aggressively per frame than at 60fps. The exponential form computes the correct multiplier for the actual elapsed time regardless of the frame rate.</p>
+<p>At each frame, the camera Y position is set directly from <code>spring.pos</code>. There is no lerp between frames — the spring integration is the motion model.</p>
+
+<h2 id="constants">Choosing the constants</h2>
+<p>The stiffness and damping constants interact. Stiffness controls how quickly the spring responds to a displacement — high stiffness snaps fast, low stiffness oscillates slowly. Damping controls how quickly oscillations decay — low damping produces many overshoots (underdamped), high damping produces a slow crawl without overshoot (overdamped).</p>
+<div class="doc__card">
+  <p>The constants used in Deep Signal were found by feel rather than formula:</p>
+  <ul>
+    <li>Stiffness 12 — fast enough to keep the camera responsive to scroll without lag, slow enough to produce visible overshoot at chapter transitions.</li>
+    <li>Damping 0.0015 — produces exactly one visible overshoot before settling. Higher values would settle immediately (feels rigid); lower values would oscillate for several seconds (feels bouncy).</li>
+    <li>dt clamped to 100ms — prevents a tab returning from background from launching the camera across the scene in one frame.</li>
+  </ul>
+</div>
+<p>A useful calibration technique: set stiffness high (30+) and damping near 1.0 to observe a rigid snap, then reduce damping until you see the first overshoot, then reduce stiffness until the arrival speed feels natural. Work from the extremes inward rather than guessing at the middle.</p>
+
+<h2 id="chapter-stops">Chapter stops and scroll input</h2>
+<p>Deep Signal's camera visits five distinct positions — SURFACE, DESCENT, THE VEIN, THE CORE, RESURFACE. The camera does not smoothly interpolate between chapters; it commits to one chapter stop at a time, and the spring produces the glide between stops.</p>
+<p>The scroll progress (0–1 over the full page height) maps to a chapter index using fixed thresholds. The chapter is only committed once progress passes the threshold by a margin — the 42% offset mentioned in the <a href="/blog/webgl-no-js-fallback.html">fallback architecture post</a>:</p>
+<pre><code>// Chapter thresholds (0-1 scroll progress)
+const THRESHOLDS = [0, 0.18, 0.38, 0.62, 0.80];
+const CHAPTER_POSITIONS = [0, -14, -32, -51, -8]; // world Y
+
+function getTargetY(scrollProgress) {
+  // Find the current chapter: threshold must be passed by 0.04 before committing
+  let chapter = 0;
+  for (let i = 1; i &lt; THRESHOLDS.length; i++) {
+    if (scrollProgress > THRESHOLDS[i] + 0.04) chapter = i;
+  }
+  return CHAPTER_POSITIONS[chapter];
+}</code></pre>
+<p>The 0.04 hysteresis prevents the camera from toggling between two chapters when scroll velocity puts progress exactly on a threshold. Without it, a slow scroll near the chapter boundary produces rapid chapter transitions that spike the spring.</p>
+<p>The spring target is updated every frame from <code>getTargetY</code>. The spring smoothly chases the target — so when the chapter commits and the target jumps from position A to position B, the spring glides rather than teleports.</p>
+
+<h2 id="frame-rate">Frame-rate independence</h2>
+<p>The spring integration requires accurate delta time. Three.js's <code>Clock.getDelta()</code> provides this in seconds. The implementation clamps delta time to a maximum of 100ms to prevent large jumps when the tab was backgrounded:</p>
+<pre><code>function onFrame() {
+  const rawDt = clock.getDelta();
+  const dt = Math.min(rawDt, 0.1); // clamp to 100ms max
+
+  const targetY = getTargetY(scrollProgress);
+  camera.position.y = stepSpring(spring, targetY, dt);
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(onFrame);
+}</code></pre>
+<p>Without the clamp, a tab that is backgrounded for 30 seconds and then brought back has a pending dt of 30 seconds. The spring integration runs at 30 × STIFFNESS × displacement force, which launches the camera hundreds of units in one frame. The clamp limits this to 100ms of accumulated movement regardless of how long the tab was inactive.</p>
+<p>The <a href="/blog/webgl-adaptive-quality-governor.html">adaptive quality governor</a> interacts with the spring at LOW tier: the reduced frame rate on slow hardware means each spring step is larger, which can make the camera feel more responsive (fewer, larger steps) rather than smoother. This is acceptable at LOW tier — at that performance level, physical accuracy is less important than keeping the page interactive.</p>
+
+<h2 id="qa-gotcha">The QA gotcha</h2>
+<p>The spring creates a specific QA problem: tests that assert on camera position must wait for the spring to settle. With SwiftShader at 8fps, a spring with stiffness 12 and damping 0.0015 takes about 8–10 real seconds to settle to within 1% of its target from a full-chapter-distance away.</p>
+<p>The smoke suite avoids asserting on camera position directly. Instead, it uses the chapter index from <code>__labQ().qIdx</code> (which only advances when the camera is within range of the target position) and sleeps for 9 seconds after a large scroll jump before reading state:</p>
+<pre><code>// Scroll to chapter 3 (THE CORE)
+await evalJs("window.scrollTo(0, document.body.scrollHeight * 0.65)");
+// Wait for spring to settle on slow hardware
+await sleep(9000);
+// Now assert on chapter index
+const { qIdx } = await evalJs("window.__labQ()");
+assert(qIdx === 3, `expected chapter 3, got ${qIdx}`);</code></pre>
+<p>Tests that skip this sleep pass reliably on a fast local machine with a real GPU and fail intermittently on CI. The 9-second value was measured from actual frame timing on the Actions runner — not guessed.</p>

@@ -1,0 +1,101 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "Smoke-testing browser software with Chrome DevTools Protocol — stackwith.me"
+headline: "Smoke-testing browser software with Chrome DevTools Protocol"
+description: "How stackwith.me runs 300+ automated browser-level checks before every deploy using the Chrome DevTools Protocol directly — no Playwright, no Selenium, just raw CDP sessions."
+excerpt: "A walkthrough of the headless CDP smoke harness behind every push to this domain: session setup, evaluating QA hooks, testing WebGL boot markers, and the gotchas that cost hours."
+category: "Testing & quality"
+searchTerms: "CDP Chrome DevTools Protocol smoke testing headless browser automation WebGL testing QA"
+readingTime: 9
+published: "2026-07-25"
+modified: "2026-08-05"
+permalink: "blog/smoke-testing-with-cdp.html"
+---
+<p>Every push to stackwith.me runs a browser-level smoke suite before anything goes live. Not a linter, not a unit test — a real headless Chrome instance visiting every page, evaluating JavaScript hooks, and asserting on the actual rendered state. The harness uses the Chrome DevTools Protocol directly, with no additional test framework sitting between the runner and the browser.</p>
+<p>This note explains why that choice was made, how the sessions are structured, and the specific gotchas that are not obvious from the CDP documentation.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#why">Why raw CDP</a></li>
+    <li><a href="#session">Session setup</a></li>
+    <li><a href="#hooks">QA hooks in the page</a></li>
+    <li><a href="#webgl">Testing WebGL boot markers</a></li>
+    <li><a href="#gotchas">Gotchas that cost hours</a></li>
+    <li><a href="#what-passes">What the suite currently asserts</a></li>
+  </ul>
+</nav>
+
+<h2 id="why">Why raw CDP</h2>
+<p>The reason for bypassing a higher-level framework is control. Playwright and Puppeteer are excellent tools, but they add opinions about timing, retry logic, and page lifecycle management that can mask the actual failure you are trying to detect. When a WebGL page takes 12 seconds to boot on SwiftShader and the test framework has a default 5-second element-wait, the framework hides the latency rather than surfacing it.</p>
+<p>Raw CDP also makes it straightforward to use the exact Chrome binary installed on the machine — including flags like <code>--disable-background-timer-throttling</code> and <code>--disable-renderer-backgrounding</code> that are essential when opening multiple tabs and caring about rAF cadence in each.</p>
+<blockquote>The test harness should report what the browser actually did, not what the framework abstracted away.</blockquote>
+
+<h2 id="session">Session setup</h2>
+<p>A CDP session starts by spawning Chrome with <code>--remote-debugging-port=9222</code> and then connecting over WebSocket to the <code>/json/version</code> endpoint. The runner then opens target pages via <code>Target.createTarget</code> and attaches to them with <code>Target.attachToTarget</code>.</p>
+<pre><code>// Spawn Chrome with the right flags
+const chrome = spawn(CHROME_BIN, [
+  "--headless=new",
+  "--remote-debugging-port=9222",
+  "--disable-background-timer-throttling",
+  "--disable-renderer-backgrounding",
+  "--disable-backgrounding-occluded-windows",
+  "--autoplay-policy=no-user-gesture-required",
+]);</code></pre>
+<p>The <code>--autoplay-policy=no-user-gesture-required</code> flag matters for pages that create an AudioContext on boot — without it, the Web Audio graph initialises but the context remains suspended and any tests that assert on audio state silently fail.</p>
+<p>For two-tab tests (like the Supabase multiplayer integration), each tab must be created in a <em>new browser context</em> with <code>Target.createBrowserContext</code> first, otherwise the tabs share the same localStorage and the second tab's auth session overwrites the first's.</p>
+
+<h2 id="hooks">QA hooks in the page</h2>
+<p>The pages expose lightweight JavaScript objects under names like <code>__gameQ()</code>, <code>__labQ()</code>, and <code>__hubQ()</code>. These are functions — not properties — so calling them always returns a fresh snapshot of the current runtime state rather than a value that was correct at some earlier point.</p>
+<div class="doc__card">
+  <p>The convention is: <code>__pageQ()</code> returns a plain object with every state variable the smoke suite might want to check. It is defined only in production builds; the <code>?sim=1</code> URL parameter is required for the driver API.</p>
+</div>
+<p>Evaluating a hook from the runner looks like this:</p>
+<pre><code>const result = await cdp.send("Runtime.evaluate", {
+  expression: "__gameQ()",
+  returnByValue: true,
+  awaitPromise: false,
+});
+const state = result.result.value;</code></pre>
+<p>An important restriction: the expression must be a pure expression, not a statement. Wrapping it in <code>{ return __gameQ(); }</code> causes the Runtime to swallow the return value. If you need multiple statements, use an IIFE: <code>(function(){ return __gameQ(); })()</code>.</p>
+
+<h2 id="webgl">Testing WebGL boot markers</h2>
+<p>WebGL pages go through an asynchronous boot sequence: parse HTML, execute JavaScript, request animation frames, load assets over the network, and finally render the first real frame. A naive check for element visibility fails because the element can be present in the DOM while the world is still initialising.</p>
+<p>The solution is body-class markers. Each page adds a CSS class to <code>document.body</code> only when the world has actually booted — <code>lab-crystalline</code> appears on lab.html only after the GLB and KTX2 assets have loaded and the first instanced-mesh frame has been committed, for example. The smoke suite polls for these markers with a timeout:</p>
+<pre><code>const waitForClass = async (cdp, cls, timeoutMs = 15000) => {
+  const start = Date.now();
+  while (Date.now() - start &lt; timeoutMs) {
+    const { result } = await cdp.send("Runtime.evaluate", {
+      expression: `document.body.classList.contains("${cls}")`,
+      returnByValue: true,
+    });
+    if (result.value === true) return true;
+    await sleep(300);
+  }
+  throw new Error(`Timed out waiting for body class "${cls}"`);
+};</code></pre>
+<p>The same pattern works for checking that an experience <em>did not</em> boot when it should not have — asserting that <code>game-no3d</code> is present on a mobile-emulated viewport, for example.</p>
+
+<h2 id="gotchas">Gotchas that cost hours</h2>
+<p>These are the non-obvious failures that required investigation rather than a quick fix:</p>
+<ul>
+  <li><b>Lexical scope across separate evaluate calls.</b> Two separate <code>Runtime.evaluate</code> calls that each declare <code>const foo = ...</code> at the top level share the page's lexical scope. The second call throws a redeclaration error. Wrap every multi-statement evaluate block in <code>{ }</code> to create a new scope, or use <code>let</code>.</li>
+  <li><b>Background tab throttling.</b> Chrome throttles rAF and <code>setInterval</code> in tabs that are not the active foreground tab. A two-tab test where one tab's game loop never advances is almost always this — the fix is the three <code>--disable-*backgrounding*</code> Chrome flags listed above, combined with <code>Emulation.setFocusEmulationEnabled</code>.</li>
+  <li><b>GitHub Actions JSON with control characters.</b> The GitHub API sometimes returns JSON with literal control characters (0x08, 0x0A mid-string) in commit message fields. <code>JSON.parse</code> throws. The fix is <code>json.JSONDecoder(strict=False)</code> on the Python side, or a pre-filter that strips control characters before parsing.</li>
+  <li><b>SwiftShader timing.</b> On GitHub Actions runners, Chrome uses SwiftShader (the software GL renderer) at about 8 fps. Tests that rely on animations settling need sleep values of 8–10 seconds rather than 1–2. A camera lerp with coefficient 0.055 takes about 8 seconds to settle to within 1% of its target at that frame rate.</li>
+  <li><b>Supabase Realtime two-tab isolation.</b> Opening two tabs in the same browser context means they share IndexedDB and localStorage. The second tab's Supabase client reads the first tab's session token and thinks it is the same user. Each tab must be in its own browser context, created with <code>Target.createBrowserContext</code>.</li>
+</ul>
+
+<h2 id="what-passes">What the suite currently asserts</h2>
+<p>The suite runs across every page of this site on every push and covers:</p>
+<ul>
+  <li>HTTP 200 for every HTML page, CSS bundle, JS bundle, font, and 3D asset.</li>
+  <li>Absence of JavaScript exceptions on every page load.</li>
+  <li>WebGL boot markers on lab.html, game.html, and about.html.</li>
+  <li>Correct fallback classes on small-screen and reduced-motion emulation.</li>
+  <li>Checkout flow: plan detection, consent gate, sign-in stage.</li>
+  <li>Multiplayer: stub peer, BroadcastChannel two-tab, and Supabase two-tab room creation.</li>
+  <li>Content honesty strings: exact phrases pinned so copy changes require explicit smoke updates.</li>
+</ul>
+<p>The total is over 300 checks as of this writing. When a check fails, the build stops and nothing goes to GitHub Pages. That threshold is the honest version of "tested before deploy."</p>

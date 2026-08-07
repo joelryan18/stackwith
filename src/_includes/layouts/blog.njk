@@ -12,17 +12,14 @@ bodyClass: no3d page
     <span class="nav__word">STACKWITH.ME</span>
   </a>
   <nav class="nav__links" aria-label="Primary">
-    <a href="/axon.html" data-index="01">Axon</a>
-    <a href="/about.html" data-index="02">About</a>
-    <a href="/contact.html" data-index="03">Contact</a>
-    <a href="/anime.html" data-index="04">Stackime</a>
+    <a href="/blog/" data-index="01"{% if navCurrent == "blog" %} aria-current="page"{% endif %}>Field notes</a>
+    <a href="/lab.html" data-index="02">Lab</a>
+    <a href="/game.html" data-index="03">Arena</a>
+    <a href="/about.html" data-index="04">About</a>
   </nav>
-  <div class="nav__right">
-    <a href="/axon.html#plans" class="btn btn--signal">About the pass</a>
-  </div>
 </header>
 
-<main id="main" class="checkout-main">
+<main id="main" class="doc">
 {{ content | safe }}
 </main>
 
@@ -30,10 +27,10 @@ bodyClass: no3d page
   <div class="footer__base">
     <span>© <span id="year">2026</span> stackwith.me</span>
     <span><a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a> · <a href="/about.html">About</a> · <a href="/contact.html">Contact</a></span>
-    <span>BUILT&nbsp;BY&nbsp;JOEL&nbsp;RYAN</span>
+    <span>BUILT AND WRITTEN BY JOEL RYAN</span>
   </div>
 </footer>
 
 <script src="{{ assets.consent }}" defer></script>
-<script src="{{ assets.checkout }}" defer></script>
+<script src="{{ assets.blog }}" defer></script>
 <script>document.getElementById("year").textContent = new Date().getFullYear();</script>

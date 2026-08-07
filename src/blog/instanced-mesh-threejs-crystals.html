@@ -1,0 +1,140 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "InstancedMesh in Three.js: one draw call for 1,600 crystals — stackwith.me"
+headline: "InstancedMesh in Three.js: one draw call for 1,600 crystals"
+description: "How Deep Signal renders 1,600 individually animated crystal instances in a single WebGL draw call using Three.js InstancedMesh — covering instance matrix setup, per-instance attributes, and shader-side birth animation."
+excerpt: "A detailed walkthrough of the InstancedMesh technique used in Deep Signal: batching 1,600 crystal shards into one draw call, animating each individually in the vertex shader, and culling by depth band."
+category: "Three.js & rendering"
+searchTerms: "InstancedMesh Three.js WebGL instancing draw calls GPU performance crystal shader instanced rendering vertex"
+readingTime: 10
+published: "2026-08-04"
+modified: "2026-08-05"
+permalink: "blog/instanced-mesh-threejs-crystals.html"
+---
+<p>Deep Signal's crystal shaft contains 1,600 individual shards, each placed at a unique position with a unique rotation, tint, and birth depth. Each one needs to grow out of the wall as the camera passes its birth point, pulsing and swelling in response to wall strikes. Rendering these as 1,600 separate <code>THREE.Mesh</code> objects would mean 1,600 draw calls per frame — one for each state change between the vertex buffers. Using <code>THREE.InstancedMesh</code> batches all 1,600 into a single draw call.</p>
+<p>This post walks through the exact setup used: how instance matrices are stored and updated, how custom per-instance attributes (tint, birth depth, seed) are added to the geometry, and how the vertex shader uses them to animate each crystal independently without any per-frame CPU work.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#why-instancing">Why instancing matters</a></li>
+    <li><a href="#setup">Setting up InstancedMesh</a></li>
+    <li><a href="#attributes">Per-instance attributes</a></li>
+    <li><a href="#shader">The vertex shader side</a></li>
+    <li><a href="#culling">Depth-band culling</a></li>
+    <li><a href="#lod">LOD pairing</a></li>
+  </ul>
+</nav>
+
+<h2 id="why-instancing">Why instancing matters</h2>
+<p>Each WebGL draw call carries a fixed overhead: the driver must validate state, bind attribute buffers, and issue a GPU command. For a scene with 1,600 objects all sharing the same geometry and material, this overhead is paid 1,600 times per frame — even though the GPU itself could draw them all at once if the instance transforms were available as a buffer.</p>
+<p>InstancedMesh solves this by storing all 1,600 transform matrices in a single GPU buffer (<code>instanceMatrix</code>) and issuing one draw call that tells the GPU: draw this geometry 1,600 times, reading a different matrix for each instance. The per-instance transform is available in the vertex shader as a 4×4 matrix, applied to the vertex position before the normal model-view-projection transform.</p>
+<blockquote>Instancing does not reduce fill rate cost. It reduces draw-call overhead. If the scene is fill-rate limited — too many pixels, too expensive a fragment shader — instancing will not help.</blockquote>
+<p>For the crystal shaft, the geometry is simple (a few hundred triangles per variant) and the fragment shader runs a matcap lookup. The bottleneck is draw-call overhead, not fill rate, so instancing is the right tool.</p>
+
+<h2 id="setup">Setting up InstancedMesh</h2>
+<p>Creating an InstancedMesh requires the geometry, the material, and the total instance count. The count is fixed at creation time — you cannot add more instances without creating a new InstancedMesh.</p>
+<pre><code>const COUNT = 1600;
+const mesh = new THREE.InstancedMesh(geometry, material, COUNT);
+mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // only if matrices change per frame
+
+// Place each instance
+const matrix = new THREE.Matrix4();
+const position = new THREE.Vector3();
+const quaternion = new THREE.Quaternion();
+const scale = new THREE.Vector3();
+
+for (let i = 0; i &lt; COUNT; i++) {
+  // ... compute placement for instance i ...
+  matrix.compose(position, quaternion, scale);
+  mesh.setMatrixAt(i, matrix);
+}
+mesh.instanceMatrix.needsUpdate = true;
+scene.add(mesh);</code></pre>
+<p>The <code>setMatrixAt</code> method writes into the <code>instanceMatrix</code> Float32Array at the correct offset for instance <code>i</code>. After all writes, <code>instanceMatrix.needsUpdate = true</code> tells three.js to upload the buffer to the GPU before the next draw.</p>
+<p>If the matrices never change after placement (as is the case for the crystals — they are placed once at load time and their birth animation runs entirely in the vertex shader), you can use <code>THREE.StaticDrawUsage</code> instead. The GPU driver uses this hint to keep the buffer in faster memory.</p>
+
+<h2 id="attributes">Per-instance attributes</h2>
+<p>The built-in <code>instanceMatrix</code> handles position, rotation, and scale. Per-instance data that does not fit into a transform matrix — tint colour, birth depth, random seed — needs a separate buffer attribute added directly to the instanced mesh's geometry.</p>
+<pre><code>// aTint: vec4 — the hue/saturation tint for this instance (RGBA)
+const aTint = new Float32Array(COUNT * 4);
+// aBirth: float — the depth value at which this crystal starts growing
+const aBirth = new Float32Array(COUNT);
+// aSeed: float — a per-instance random value for shader variation
+const aSeed = new Float32Array(COUNT);
+
+for (let i = 0; i &lt; COUNT; i++) {
+  const tint = computeTintForInstance(i);
+  aTint[i * 4 + 0] = tint.r;
+  aTint[i * 4 + 1] = tint.g;
+  aTint[i * 4 + 2] = tint.b;
+  aTint[i * 4 + 3] = tint.a;
+  aBirth[i] = computeBirthDepth(i);
+  aSeed[i] = Math.random();
+}
+
+// Add to geometry — instanced=true makes these per-instance rather than per-vertex
+geometry.setAttribute("aTint", new THREE.InstancedBufferAttribute(aTint, 4));
+geometry.setAttribute("aBirth", new THREE.InstancedBufferAttribute(aBirth, 1));
+geometry.setAttribute("aSeed", new THREE.InstancedBufferAttribute(aSeed, 1));</code></pre>
+<p>The key is using <code>THREE.InstancedBufferAttribute</code> rather than the plain <code>THREE.BufferAttribute</code>. Three.js uses this type to set the divisor on the underlying <code>ANGLE_instanced_arrays</code> WebGL extension, telling the GPU to advance to the next attribute value once per instance rather than once per vertex.</p>
+<div class="doc__card">
+  <p>Common mistakes with per-instance attributes:</p>
+  <ul>
+    <li>Using <code>THREE.BufferAttribute</code> instead of <code>THREE.InstancedBufferAttribute</code> — the data uploads fine but the divisor is wrong, so every vertex in every instance reads the same value (the value for vertex 0).</li>
+    <li>Declaring the attribute in the shader as <code>attribute vec4 aTint</code> in a plain <code>ShaderMaterial</code> without adding it to the geometry first — it silently reads zero on most drivers and produces a fully transparent/black mesh.</li>
+    <li>Setting <code>needsUpdate = true</code> on the wrong object — it must be set on the <code>BufferAttribute</code> itself, not on the mesh or the geometry.</li>
+  </ul>
+</div>
+
+<h2 id="shader">The vertex shader side</h2>
+<p>The vertex shader receives the instance matrix as the built-in <code>instanceMatrix</code> uniform (three.js injects this automatically for InstancedMesh). The custom attributes are declared as regular GLSL <code>attribute</code> variables — the InstancedBufferAttribute divisor makes the GPU provide the per-instance value automatically.</p>
+<pre><code>// GLSL vertex shader (excerpt)
+attribute vec4 aTint;
+attribute float aBirth;
+attribute float aSeed;
+
+uniform float uGrow;  // 0 → 1, driven by scroll progress
+
+void main() {
+  // Birth animation: scale the instance from 0 to full size
+  // based on whether uGrow has passed this instance's birth depth
+  float born = smoothstep(aBirth - 0.02, aBirth + 0.04, uGrow);
+
+  // The instance matrix provides the base transform
+  vec3 instancePos = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+
+  // Apply birth scale — scale the position relative to the instance origin
+  vec3 localPos = position * born;
+  vec4 worldPos = instanceMatrix * vec4(localPos, 1.0);
+
+  // Ripple swell from wall strikes: vRip is computed separately
+  // and adds a small outward displacement
+  worldPos.xyz += normal_world * vRip * 0.055 * born;
+
+  gl_Position = projectionMatrix * modelViewMatrix * worldPos;
+
+  // Pass tint to fragment shader
+  vTint = aTint.rgb;
+}</code></pre>
+<p>The birth animation is entirely GPU-side. The CPU only needs to update the single <code>uGrow</code> uniform each frame as the scroll position changes — no per-instance matrix updates, no JavaScript loops over 1,600 objects.</p>
+
+<h2 id="culling">Depth-band culling</h2>
+<p>Even with instancing, running the vertex shader for 1,600 instances that are far outside the camera frustum is wasteful. The shaft spans about 70 world units of depth; at any given camera position, only a narrow band of depth is visible inside the fog.</p>
+<p>The culling strategy splits the 1,600 instances into 6 depth bands of about 12 units each. Each band is its own InstancedMesh. Each frame, a band's mesh is set to <code>visible = false</code> when the band's centre depth is more than 36 units from the camera (matching the shader's own aerial-fade horizon) or when all instances in the band are ungrown (scale 0):</p>
+<pre><code>for (const band of bands) {
+  const bandCamDist = Math.abs(band.centreY - camera.position.y) - 5;
+  band.mesh.visible = band.maxBirth &lt; uGrow + 0.02 && bandCamDist &lt; 36;
+}</code></pre>
+<p>The 36-unit horizon matches the shader's aerial fade distance deliberately — the shader fades out anything beyond 36 units anyway, so there is no visual difference between rendering a far band at alpha 0 and not rendering it at all. The culling is provably pop-free.</p>
+
+<h2 id="lod">LOD pairing</h2>
+<p>Deep Signal ships two geometry variants per crystal type: a hi-poly mesh with bevelled edges and parasite micro-spikes (400–1700 triangles each) and a lo-poly version at the v1 topology (40–80 triangles each). See the <a href="/blog/draco-ktx2-compressed-3d-assets-webgl.html">Draco and KTX2 pipeline post</a> for how both are compressed into the same GLB.</p>
+<p>At runtime, each band contains two InstancedMesh objects — one per LOD level — sharing the same matrices and custom attributes. Each frame, one mesh is visible and one is hidden based on the band's distance from the camera:</p>
+<pre><code>const LOD_DIST = 18; // units
+const useHi = bandCamDist &lt; LOD_DIST;
+band.meshHi.visible = useHi && band.mesh.visible;
+band.meshLo.visible = !useHi && band.mesh.visible;</code></pre>
+<p>Sharing the matrix and attribute buffers between the two LOD meshes avoids duplicating those uploads. The tricky part is that <code>instanceMatrix.needsUpdate</code> must be set on both mesh references if the matrices ever change — three.js tracks buffer uploads per <code>BufferAttribute</code> instance, and the two meshes share the same instance. For static placement (which is the case here), this is a non-issue: the matrices are uploaded once on load.</p>
+<p>The <a href="/blog/webgl-adaptive-quality-governor.html">adaptive quality governor</a> also interacts with LOD: at LOW quality tier, only the lo-poly InstancedMesh is ever shown, regardless of distance, to further reduce vertex shader cost on very slow hardware.</p>

@@ -1,27 +1,41 @@
 ---
 layout: layouts/hub.njk
-title: "stackwith.me — a one-person software workshop. Three products, live."
-description: "Software, built like hardware. A one-person workshop with three products in production: the AXON agent platform, the Stackime anime tracker, and engineering field notes. Every spec on this page is real."
+title: "stackwith.me — browser projects and engineering field notes"
+description: "Joel Ryan's one-person software workshop: interactive browser projects, transparent design showcases, and first-hand engineering notes backed by the code that built them."
 ogTitle: "stackwith.me — software, built like hardware"
 permalink: "index.html"
 ---
     <section class="wf-panel wf-section wf-hero">
-      <div class="wf-hero__top">
+      <div class="wf-hero__top" data-wf>
         <p class="wf-stamp wf-stamp--box">STACKWITH.ME · ONE-PERSON SOFTWARE WORKSHOP</p>
-        <p class="wf-stamp">EST 2026 · IN PRODUCTION</p>
+        <p class="wf-stamp">EST 2026 · BUILT IN PUBLIC</p>
       </div>
-      <h1 class="wf-title"><span class="ln">Software,</span><span class="ln">built like <em class="etch">hardware.</em></span></h1>
-      <p class="wf-hero__sub">Three products are live right now — an autonomous-agent platform, an anime community tracker, and the engineering notes written while building both. <b>One person builds, tests, and ships all of it.</b> Every spec below is real: exact prices, real dates, checks that actually run.</p>
-      <div class="wf-hero__base">
+      <div class="wf-hero__grid">
+        <div class="wf-hero__lead">
+          <p class="wf-kicker" data-wf>FIELD CATALOG / WORKSHOP ISSUE 01</p>
+          <h1 class="wf-title" data-wf><span class="ln">Software,</span><span class="ln">built like <em class="etch">hardware.</em></span></h1>
+          <p class="wf-hero__sub" data-wf>Browser software built in public: an autonomous-agent interface study, an anime community tracker, WebGL experiments, a playable arena, and the engineering notes behind them. <b>Joel Ryan designs, builds, tests, and documents the whole workshop.</b> Working code is separated from design targets on every page.</p>
+        </div>
+        <aside class="wf-hero__panel" data-wf aria-label="Workshop index">
+          <p class="wf-stamp">MANUFACTURED AS</p>
+          <ul class="wf-hero__index">
+            <li><b>01</b><span>AXON</span></li>
+            <li><b>02</b><span>STACKIME</span></li>
+            <li><b>03</b><span>FIELD NOTES</span></li>
+          </ul>
+          <p class="wf-hero__note">Precision-built interfaces, honest state, and working systems over theater.</p>
+        </aside>
+      </div>
+      <div class="wf-hero__base" data-wf>
         <div class="wf-hero__acts">
           <a class="wf-key wf-key--acid" href="/axon.html">Enter AXON <b>→</b></a>
           <a class="wf-key" href="#catalog">Browse the catalog <b>↓</b></a>
         </div>
         <dl class="wf-lcd" aria-label="Workshop status">
           <div><dt>Local time</dt><dd id="wfClock">--:--:--</dd></div>
-          <div><dt>Units live</dt><dd>3 / 3</dd></div>
-          <div><dt>Smoke checks</dt><dd>266 PASS</dd></div>
-          <div><dt>Last ship</dt><dd>2026-07-18</dd></div>
+          <div><dt>Projects</dt><dd>4 documented</dd></div>
+          <div><dt>Test suite</dt><dd>300+ checks</dd></div>
+          <div><dt>Field notes</dt><dd>{{ collections.posts | length }} published</dd></div>
         </dl>
       </div>
     </section>
@@ -29,10 +43,10 @@ permalink: "index.html"
     <section class="wf-units" id="catalog" aria-labelledby="catalog-title">
       <div class="wf-head" data-wf>
         <div>
-          <p class="wf-stamp">[ PRODUCT CATALOG ]</p>
-          <h2 class="wf-h2" id="catalog-title">Three units in production.</h2>
+          <p class="wf-stamp">[ PROJECT CATALOG ]</p>
+          <h2 class="wf-h2" id="catalog-title">Three doors into the workshop.</h2>
         </div>
-        <p class="wf-stamp">ALL DEPLOYED · SAME STACK · SAME DESK</p>
+        <p class="wf-stamp">REAL CODE · CLEAR LABELS · SAME DESK</p>
       </div>
 
       <article class="wf-unit" data-wf>
@@ -43,14 +57,14 @@ permalink: "index.html"
           </div>
           <div>
             <h3 class="wf-unit__name">AXON</h3>
-            <p class="wf-unit__role">Autonomous-agent platform</p>
+            <p class="wf-unit__role">Autonomous-agent interface study</p>
           </div>
-          <p class="wf-unit__desc">Agents that sense events across your stack, reason about them, and act with guardrails — writing a full reasoning trace for every run. Real checkout, real auth, real plans you can buy today.</p>
+          <p class="wf-unit__desc">A design showcase for how an inspectable agent product could explain sensing, planning, guarded action, and audit traces. The interface is real; the autonomous-agent service it depicts is not offered as working software.</p>
           <dl class="wf-spec">
-            <div><dt>Function</dt><dd>Event-driven agents with audit trails</dd></div>
-            <div><dt>Checkout</dt><dd>Razorpay, live keys</dd></div>
-            <div><dt>Auth</dt><dd>Supabase — Google sign-in</dd></div>
-            <div><dt>Plans</dt><dd>₹5 Hobby · ₹6,999 Studio, one-time</dd></div>
+            <div><dt>Function</dt><dd>Product concept + interactive trace demo</dd></div>
+            <div><dt>Interface</dt><dd>Eleventy, GSAP, Three.js</dd></div>
+            <div><dt>Support</dt><dd>Optional one-time supporter pass</dd></div>
+            <div><dt>Status</dt><dd>Design showcase, clearly labelled</dd></div>
           </dl>
           <a class="wf-key" href="/axon.html" data-unit="axon">Open unit 01 <b>→</b></a>
         </div>
@@ -103,11 +117,11 @@ permalink: "index.html"
             <h3 class="wf-unit__name">FIELD NOTES</h3>
             <p class="wf-unit__role">Engineering blog</p>
           </div>
-          <p class="wf-unit__desc">Notes from building the other two units — agents and guardrails, orchestration latency, audit trails. Written after shipping, not before, so every essay documents what actually happened.</p>
+          <p class="wf-unit__desc">First-hand notes from the repository: browser fallbacks, WebGL performance, asset compression, security boundaries, testing, and the design reasoning behind AXON. Each note names what is implemented and what remains illustrative.</p>
           <dl class="wf-spec">
-            <div><dt>Function</dt><dd>Ship reports and engineering essays</dd></div>
-            <div><dt>Volume</dt><dd>3 essays published</dd></div>
-            <div><dt>Latest</dt><dd>2026-06-24</dd></div>
+            <div><dt>Function</dt><dd>Evidence-backed engineering notes</dd></div>
+            <div><dt>Volume</dt><dd>{{ collections.posts | length }} articles published</dd></div>
+            <div><dt>Author</dt><dd>Joel Ryan</dd></div>
             <div><dt>Paywall</dt><dd>None</dd></div>
           </dl>
           <a class="wf-key" href="/blog/" data-unit="blog">Open unit 03 <b>→</b></a>
@@ -156,23 +170,15 @@ permalink: "index.html"
         <a class="wf-notes__all" href="/blog/">All notes →</a>
       </div>
       <div class="wf-notes__list" data-wf>
-        <a class="wf-note" href="/blog/why-automation-needs-an-audit-trail.html">
-          <time datetime="2026-06-24">2026-06-24</time>
-          <h3>Your automation is only as good as its audit trail</h3>
+      {% for post in collections.posts | reverse %}
+        {% if loop.index <= 3 %}
+        <a class="wf-note" href="{{ post.url }}">
+          <time datetime="{{ post.data.published }}">{{ post.data.published }}</time>
+          <h3>{{ post.data.headline or post.data.title }}</h3>
           <span class="wf-note__go" aria-hidden="true">↗</span>
-          <p>An agent that can't explain itself is a liability wearing a productivity costume. How reasoning traces turn "it did something" into "it did exactly this, for exactly this reason."</p>
+          <p>{{ post.data.excerpt }}</p>
         </a>
-        <a class="wf-note" href="/blog/engineering-sub-40ms-orchestration.html">
-          <time datetime="2026-06-10">2026-06-10</time>
-          <h3>Engineering sub-40ms orchestration: reflexes, not workflows</h3>
-          <span class="wf-note__go" aria-hidden="true">↗</span>
-          <p>A nervous system doesn't convene a meeting to pull a hand off a stove. Why agent hand-offs must live at the edge, and what we cut to get coordination under forty milliseconds.</p>
-        </a>
-        <a class="wf-note" href="/blog/guardrails-are-a-feature.html">
-          <time datetime="2026-05-28">2026-05-28</time>
-          <h3>Guardrails are a feature, not friction</h3>
-          <span class="wf-note__go" aria-hidden="true">↗</span>
-          <p>The fastest way to lose an ops team's trust is an agent with root and no rules. Scoped permissions, approval gates, and why constraints make autonomy shippable.</p>
-        </a>
+        {% endif %}
+      {% endfor %}
       </div>
     </section>

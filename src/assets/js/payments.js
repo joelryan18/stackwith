@@ -12,18 +12,18 @@ export const PLANS = {
     name: "Hobby", tag: "[ 00 ]", amount: 500, display: "₹5",
     description: "Hobby — AXON Supporter Pass (one-time)",
     benefits: [
-      "1 active agent", "500 runs / month", "Community connectors", "Community support",
-      "Signal replay — 7-day retention", "Starter agent templates",
-      "Supporter listing in the AXON registry", "Priority queue for access requests",
+      "Downloadable AXON supporter pass", "Supporter thank-you email",
+      "Your name in the public supporter registry (optional)",
+      "Direct link to all public field notes", "No agent software or usage entitlement",
     ],
   },
   studio: {
     name: "Studio", tag: "[ 01 ]", amount: 699900, display: "₹6,999",
     description: "Studio — AXON Supporter Pass (one-time)",
     benefits: [
-      "Unlimited agents", "100k runs / month", "200+ connectors", "Guardrails & audit log",
-      "Priority support", "Priority trace lanes", "Workspace-level guardrail policies",
-      "Early access to new instrument modules",
+      "Downloadable Studio supporter pass", "Supporter thank-you email",
+      "Prominent supporter credit (optional)", "One written project-feedback exchange",
+      "Direct link to all public field notes", "No agent software or usage entitlement",
     ],
   },
 };

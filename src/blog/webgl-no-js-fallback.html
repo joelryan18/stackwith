@@ -1,0 +1,70 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "Building a no-JS fallback for a WebGL-first experience — stackwith.me"
+headline: "Building a no-JS fallback for a WebGL-first experience"
+description: "How Deep Signal and Signal Strike keep meaningful, crawlable content available when JavaScript, WebGL, motion, pointer lock, or a large screen is unavailable."
+excerpt: "A WebGL page should fail into an article, not a blank canvas. Here is the layered fallback used by the Lab and Arena projects."
+category: "Accessibility & resilience"
+searchTerms: "WebGL no JS fallback progressive enhancement reduced motion crawler accessibility canvas"
+readingTime: 8
+published: "2026-07-22"
+modified: "2026-08-05"
+permalink: "blog/webgl-no-js-fallback.html"
+---
+<p>Deep Signal is built around a full-screen WebGL descent. Signal Strike depends on a desktop browser, pointer lock, a mouse, and keyboard input. Both could easily become empty canvases for crawlers, reduced-motion users, unsupported devices, or anyone whose graphics initialization fails.</p>
+<p>The solution in this repository is not a generic “enable JavaScript” message. Each experience contains a complete reading version in the initial HTML.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#layers">Five failure layers</a></li>
+    <li><a href="#html">Write the fallback as primary content</a></li>
+    <li><a href="#css">Let capability decide visibility</a></li>
+    <li><a href="#runtime">Fail closed at runtime</a></li>
+    <li><a href="#limits">What remains imperfect</a></li>
+  </ul>
+</nav>
+
+<h2 id="layers">Five failure layers</h2>
+<p>The pages account for different reasons the interactive version might not run:</p>
+<ul>
+  <li>JavaScript is disabled.</li>
+  <li>The browser lacks required WebGL features or an asset fails to load.</li>
+  <li>The user requests reduced motion.</li>
+  <li>The screen or input device does not support the interaction model.</li>
+  <li>Initialization stalls and the intro overlay would otherwise trap the page.</li>
+</ul>
+<p>These are separate states. Treating them as one boolean hides useful choices—for example, a phone can still receive the full reading version even though the desktop game cannot sensibly run.</p>
+
+<h2 id="html">Write the fallback as primary content</h2>
+<p>`src/lab.html` and `src/game.html` contain substantial `<article>` elements, not content injected after feature detection. That has three benefits:</p>
+<ul>
+  <li>The explanation exists before scripts execute.</li>
+  <li>Search engines and assistive technology receive meaningful structure.</li>
+  <li>A graphics failure can reveal existing content instead of constructing an emergency interface.</li>
+</ul>
+<p>The Lab article explains the authored crystals, Draco geometry, KTX2 matcaps, interactions, adaptive quality, and persistent keystone. The Arena article documents modes, controls, networking, procedural sound, and hardware requirements.</p>
+
+<h2 id="css">Let capability decide visibility</h2>
+<p>The layout starts with both the experience shell and reading content available in the document. CSS and runtime classes decide which presentation is visible. Inside each layout, a `<noscript>` block removes the canvas, HUD, intro, and control layers while explicitly showing the fallback article.</p>
+<pre><code>&lt;noscript&gt;&lt;style&gt;
+  .lab-intro, .lab-hud, .labfx { display: none !important; }
+  .lab-fallback { display: block !important; }
+&lt;/style&gt;&lt;/noscript&gt;</code></pre>
+<p>The exact selectors differ between Lab and Arena, but the principle is the same: the no-script path cannot remain behind a boot veil.</p>
+
+<h2 id="runtime">Fail closed at runtime</h2>
+<p>JavaScript errors are harder because JavaScript has already hidden or transformed parts of the page. The runtime therefore uses explicit failure classes and hard intro-release timers. In `lab3d.js`, an asset or initialization error routes to the no-3D presentation. The intro also has a timed escape hatch so a stalled loader does not permanently cover the article.</p>
+<p>The smoke harness tests honesty markers and fallback conditions rather than only checking for a 200 response. That matters: a page can load successfully while remaining unusable.</p>
+
+<h2 id="limits">What remains imperfect</h2>
+<div class="doc__card">
+  <ul>
+    <li>The interactive and reading presentations duplicate some information and must be kept synchronized.</li>
+    <li>A full article is heavier than a short fallback, though it delivers more value.</li>
+    <li>Feature detection cannot predict every slow or unstable GPU.</li>
+    <li>Pointer-lock games still need a fundamentally different mobile interaction model; the fallback does not create one.</li>
+  </ul>
+</div>
+<p>The fallback is successful when it is useful on its own. It should not feel like the broken version of the “real” page.</p>

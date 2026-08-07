@@ -1,0 +1,120 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "Adaptive quality governors for WebGL: automatic performance scaling in the browser — stackwith.me"
+headline: "Adaptive quality governors for WebGL: automatic performance scaling in the browser"
+description: "How Deep Signal and Signal Strike use a frame-time EMA governor to step device pixel ratio, LOD, and effect quality automatically — keeping the experience interactive on everything from a high-end GPU to SwiftShader."
+excerpt: "A first-hand look at the multi-tier quality governor used across this site's WebGL projects: how frame-time EMA drives DPR stepping, effect shedding, and LOD selection without explicit capability detection."
+category: "WebGL & performance"
+searchTerms: "WebGL performance adaptive quality DPR scaling EMA frame time governor LOD three.js rendering"
+readingTime: 11
+published: "2026-08-03"
+modified: "2026-08-05"
+permalink: "blog/webgl-adaptive-quality-governor.html"
+---
+<p>Every WebGL experience on this site targets the same range of hardware — from a recent MacBook Pro with a discrete GPU, through the integrated graphics on a low-powered laptop, down to SwiftShader, the Chrome software renderer used on GitHub Actions CI. A working approach is not to pick one quality level and accept that it breaks on slow hardware, but to measure actual frame performance and step quality down at runtime until it fits the device.</p>
+<p>The system described here is used in Deep Signal (<a href="/lab.html">lab.html</a>), Signal Strike (<a href="/game.html">game.html</a>), and the About page instrument. It drives three quality tiers through a frame-time exponential moving average, with hysteresis to prevent thrashing and a specific step-down order that preserves the most visually important effects as long as possible.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#why-not-detect">Why capability detection fails</a></li>
+    <li><a href="#ema">Frame-time EMA</a></li>
+    <li><a href="#tiers">The three quality tiers</a></li>
+    <li><a href="#applying">Applying a quality change</a></li>
+    <li><a href="#shedding">Effect shedding order</a></li>
+    <li><a href="#swiftshader">The SwiftShader reality</a></li>
+  </ul>
+</nav>
+
+<h2 id="why-not-detect">Why capability detection fails</h2>
+<p>The natural first instinct is to query the GPU before starting: check <code>RENDERER</code> via <code>WEBGL_debug_renderer_info</code>, check maximum texture size, check whether the device is mobile. These signals correlate with performance but they do not measure it.</p>
+<p>A MacBook Air with an M2 chip has a powerful integrated GPU, but it also has aggressive thermal throttling — the first ten seconds are fast and the next sixty are not. A dedicated GPU on a three-year-old gaming laptop is fast for this use case. SwiftShader, the software renderer, is present on some Linux configurations that have perfectly capable GPUs. None of these are predictable from a device fingerprint at load time.</p>
+<blockquote>Capability detection tells you what the hardware could do. Frame time measurement tells you what it is actually doing right now.</blockquote>
+<p>The only reliable signal is the frame time you observe after rendering has actually started. The governor reads this signal and acts on it, rather than making a static prediction at boot.</p>
+
+<h2 id="ema">Frame-time EMA</h2>
+<p>An exponential moving average smooths noisy frame time measurements into a stable signal. The formula is simple:</p>
+<pre><code>const EMA_ALPHA = 0.05; // higher = more reactive, lower = smoother
+let emaMs = 16.67; // start at the 60fps target
+
+function onFrame(now) {
+  const dt = now - lastFrameTime;
+  lastFrameTime = now;
+  emaMs = EMA_ALPHA * dt + (1 - EMA_ALPHA) * emaMs;
+  governorTick(emaMs);
+  requestAnimationFrame(onFrame);
+}</code></pre>
+<p>An alpha of 0.05 gives a window of roughly 2 seconds at 60fps — slow enough to ignore individual dropped frames from garbage collection, fast enough to respond to a sustained performance change within a few seconds of rendering starting.</p>
+<p>The governor fires from the EMA value, not the raw frame time. Firing from the raw value would cause a step-down on every GC pause, stutter, or brief system interrupt, which produces visible quality changes every few seconds even on fast hardware.</p>
+<p>Hysteresis prevents oscillation: the governor steps down when <code>emaMs &gt; 45</code> (below 22fps) and only steps up when <code>emaMs &lt; 20</code> (above 50fps) <em>and</em> the current tier has been held for at least 8 seconds. Without the hold timer, a device that oscillates between 20ms and 22ms will continuously toggle between two tiers.</p>
+<pre><code>const STEP_DOWN_MS = 45;
+const STEP_UP_MS = 20;
+const STEP_UP_HOLD_S = 8;
+let tierHeldSince = performance.now();
+
+function governorTick(emaMs) {
+  const heldS = (performance.now() - tierHeldSince) / 1000;
+  if (emaMs &gt; STEP_DOWN_MS &amp;&amp; tier &gt; 0) {
+    setTier(tier - 1);
+    tierHeldSince = performance.now();
+  } else if (emaMs &lt; STEP_UP_MS &amp;&amp; heldS &gt; STEP_UP_HOLD_S &amp;&amp; tier &lt; TIER_MAX) {
+    setTier(tier + 1);
+    tierHeldSince = performance.now();
+  }
+}</code></pre>
+
+<h2 id="tiers">The three quality tiers</h2>
+<p>Three tiers cover the practical range from high-end desktop to software renderer:</p>
+<div class="doc__card">
+  <ul>
+    <li><b>HIGH (tier 2)</b> — Native device pixel ratio (capped at 2×), full post-processing stack (SSAO, FXAA, colour grade), hi-poly LOD meshes, bloom. Target: sustained 60fps at DPR 1.5–2× on a mid-range GPU.</li>
+    <li><b>MED (tier 1)</b> — 0.75× DPR, SSAO and bloom shed, FXAA and colour grade retained (cheap), lo-poly LOD meshes. Target: sustained 30fps on integrated graphics.</li>
+    <li><b>LOW (tier 0)</b> — 0.5× DPR, all post-processing shed except the base render pass, lo-poly LOD. Target: usable interaction on SwiftShader or heavily throttled mobile.</li>
+  </ul>
+</div>
+<p>The tier definitions are expressed as QCAPS objects specific to each page, because the performance envelope is different for 1,600 instanced crystal shards (lab) vs a game with a full post-processing pipeline (game) vs a 62,000-particle field (about). The governor logic is shared; the thresholds and effect lists are per-page.</p>
+
+<h2 id="applying">Applying a quality change</h2>
+<p>Changing DPR is the most visually significant quality change — it directly affects render resolution. It requires coordinated updates to the renderer and the shaders:</p>
+<pre><code>function applyDPR(newDPR) {
+  renderer.setPixelRatio(newDPR);
+  renderer.setSize(
+    container.clientWidth,
+    container.clientHeight,
+    false // don't update style — CSS size stays the same
+  );
+  // Re-sync resolution uniforms to all materials that use them
+  for (const mat of shaderMaterials) {
+    mat.uniforms.uResolution.value.set(
+      container.clientWidth * newDPR,
+      container.clientHeight * newDPR
+    );
+    mat.uniforms.uPx.value = 1 / (container.clientWidth * newDPR);
+  }
+}</code></pre>
+<p>The uniform sync step is the one that gets missed. Without it, effects like SSAO that read <code>uResolution</code> to compute sample offsets continue operating at the old resolution, producing incorrect artefacts. The renderer is rendering at the new size, but the shader thinks it is the old size.</p>
+<p>The <code>false</code> flag on <code>setSize</code> is equally important. Without it, three.js updates the canvas CSS size as well as the render buffer — halving the CSS size halves the element on screen, which is not the intent. The canvas should stay the same display size; only the number of rendered pixels changes.</p>
+
+<h2 id="shedding">Effect shedding order</h2>
+<p>When stepping down from HIGH to MED, effects are shed in a specific order based on their GPU cost and their contribution to the visual identity of the experience:</p>
+<ol>
+  <li><b>SSAO first.</b> Ambient occlusion is the most expensive effect in the pipeline. An N8AOPass samples the depth buffer tens of times per pixel. Removing it gives back the most GPU budget and has the least perceptible impact at medium resolution — the contact shadows disappear but the scene remains readable.</li>
+  <li><b>Bloom next.</b> UnrealBloom runs multiple blur passes. At MED tier it is already running at lower resolution (because DPR dropped), making the quality loss modest. At LOW tier it is removed entirely.</li>
+  <li><b>FXAA and colour grade last.</b> These are full-screen shader passes that cost one texture sample per pixel. Their cost is negligible compared to SSAO and bloom, but more importantly, the colour grade (chromatic aberration, S-curve, vignette, film grain) is central to the visual identity. It is the last effect removed, and only when the device cannot sustain even a minimal interaction rate without it.</li>
+</ol>
+<p>The governor in Signal Strike also drops FXAA and grade together with a single flag, because they share a ShaderPass and the visual regression is acceptable when the alternative is sub-15fps gameplay.</p>
+
+<h2 id="swiftshader">The SwiftShader reality</h2>
+<p>GitHub Actions CI runs Chrome with SwiftShader, the software WebGL renderer. On the runners used for this project, SwiftShader sustains about 8fps for the lab scene and 4–6fps for the game. Every QA test that involves an animated WebGL scene must account for this.</p>
+<p>The EMA-based governor detects SwiftShader within the first 2 seconds of rendering and steps all the way down to tier 0. The <a href="/blog/smoke-testing-with-cdp.html">CDP smoke harness</a> polls for the settled tier rather than asserting immediately, and uses 8–10 second sleep values for any test that requires camera or particle settlement:</p>
+<pre><code>// Wrong: will fail on SwiftShader at 8fps
+await sleep(2000);
+assert(cameraSettled());
+
+// Right: poll with a long timeout
+await waitForCondition(
+  () => cameraSettled(),
+  { timeoutMs: 12000, pollMs: 300 }
+);</code></pre>
+<p>The quality check in the smoke suite asserts that the <code>__labQ().dpr</code> and <code>__labQ().disp</code> values are consistent with the expected tier for the renderer, not that they are at HIGH. On SwiftShader, a LOW-tier result is the correct passing state. See the <a href="/blog/webgl-no-js-fallback.html">fallback architecture post</a> for how the smoke harness tests the no-3D path separately from the quality tier.</p>

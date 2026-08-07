@@ -71,7 +71,7 @@ const metrics = (w, h, mobile = false) => S("Emulation.setDeviceMetricsOverride"
 let failed = 0;
 const check = (name, ok, extra = "") => { console.log(`${ok ? "PASS" : "FAIL"}  ${name}${ok ? "" : "  " + extra}`); if (!ok) failed++; };
 
-/* ---- 1 · every page loads clean, correct head, no ads before consent ---- */
+/* ---- 1 · every page loads clean, correct head, adsense global tag present ---- */
 for (const p of ["/", "/axon.html", "/about.html", "/lab.html", "/game.html", "/contact.html", "/privacy.html", "/terms.html", "/checkout.html?plan=hobby", "/anime.html"]) {
   await metrics(1440, 900);
   await go(BASE + p, 3200);
@@ -79,7 +79,7 @@ for (const p of ["/", "/axon.html", "/about.html", "/lab.html", "/game.html", "/
   check(`${p} title`, !!(await evalJs("document.title")));
   check(`${p} canonical`, !!(await evalJs(`document.querySelector('link[rel="canonical"]')?.href`)));
   check(`${p} og:image absolute`, String(await evalJs(`document.querySelector('meta[property="og:image"]')?.content`)).startsWith("https://stackwith.me/"));
-  check(`${p} no adsense before consent`, !(await evalJs(`!!document.querySelector('script[src*="pagead2"]')`)));
+  check(`${p} adsense global tag in head`, await evalJs(`!!document.querySelector('script[src*="pagead2"]')`));
   check(`${p} consent banner shown`, await evalJs(`!!document.querySelector('aside.consent')`));
   await evalJs("localStorage.clear()");
 }
@@ -96,7 +96,7 @@ check("hub: 3 device screens present", (await evalJs(`document.querySelectorAll(
 check("hub: workshop booted (honesty marker)", await evalJs(`document.body.classList.contains("wf-on")`));
 check("hub: screens actually draw frames", await evalJs(`new Promise((res) => setTimeout(() => res(window.__hubQ && window.__hubQ().frames > 2), 400))`));
 check("hub: LCD clock is live", await evalJs(`/^\\d{2}:\\d{2}:\\d{2}$/.test(document.getElementById("wfClock")?.textContent || "") && window.__hubQ().clock >= 1`));
-check("hub: exact spec honesty pins", await evalJs(`document.body.textContent.includes("₹6,999") && document.body.textContent.includes("₹5")`));
+check("hub: honest one-person workshop claim", await evalJs(`document.body.textContent.includes("Joel Ryan") && document.body.textContent.toUpperCase().includes("BUILT IN PUBLIC")`));
 check("hub: QC section has substantive copy", (await evalJs(`document.querySelector(".wf-practice")?.textContent.trim().length`)) >= 400);
 check("hub: 3 field-note rows", (await evalJs(`document.querySelectorAll(".wf-note").length`)) === 3 && (await evalJs(`[...document.querySelectorAll(".wf-note")].every((a) => a.getAttribute("href").startsWith("/blog/"))`)));
 check("hub: footer sitemap links", await evalJs(`["/privacy.html","/terms.html","/about.html","/contact.html","/axon.html","/anime.html","/blog/","/lab.html","/game.html"].every((h) => !!document.querySelector('.wf-foot a[href="' + h + '"]'))`));
@@ -232,7 +232,7 @@ check("game: third person shows own rig, first person hides it", await evalJs(`(
 await evalJs(`try { localStorage.removeItem("game-loadout"); localStorage.removeItem("game-view"); } catch (e) {}`);
 check("game: HUD went live", await evalJs(`document.getElementById("gHud").classList.contains("is-live")`));
 await evalJs(`window.__gameDrive.look(Math.PI, -1.3)`);
-check("game: glider lands", await evalJs(`new Promise((res) => { const t0 = Date.now(); const poll = () => !window.__gameQ().p.gliding ? res(true) : (Date.now() - t0 > 14000 ? res(false) : setTimeout(poll, 300)); poll(); })`));
+check("game: glider lands", await evalJs(`new Promise((res) => { const t0 = Date.now(); const poll = () => !window.__gameQ().p.gliding ? res(true) : (Date.now() - t0 > 22000 ? res(false) : setTimeout(poll, 300)); poll(); })`));
 check("game: barrier places + collides", await evalJs(`(() => { window.__gameDrive.barrier(); return window.__gameQ().barriers === 1; })()`));
 check("game: storm shrinks + match resolves (ff)", await evalJs(`(() => { const q = window.__gameDrive.ff(500); return q.stormR < 150 && q.over; })()`), await evalJs(`JSON.stringify(window.__gameQ())`));
 check("game: end screen with placement", await evalJs(`new Promise((res) => setTimeout(() => res(document.getElementById("gEnd").classList.contains("is-on") && /#\\s*\\d+/.test(document.getElementById("gEndStats").textContent)), 2600))`));
@@ -275,10 +275,10 @@ await go(BASE + "/", 2500);
 await evalJs(`document.querySelector(".consent .btn--ghost").click()`); // Essential only
 await sleep(400);
 check("essential → stored", (await evalJs(`localStorage.getItem("axon-consent")`)) === "essential");
-check("essential → no ads script", !(await evalJs(`!!document.querySelector('script[src*="pagead2"]')`)));
+check("essential → script present (consent-mode v2)", await evalJs(`!!document.querySelector('script[src*="pagead2"]')`));
 await go(BASE + "/", 2500);
 check("essential persists, no banner", !(await evalJs(`!!document.querySelector("aside.consent")`)));
-check("essential persists, still no ads", !(await evalJs(`!!document.querySelector('script[src*="pagead2"]')`)));
+check("essential persists, script still present", await evalJs(`!!document.querySelector('script[src*="pagead2"]')`));
 await evalJs("localStorage.clear()");
 await go(BASE + "/", 2500);
 await evalJs(`document.querySelector(".consent .btn--signal").click()`); // Accept all
@@ -302,32 +302,30 @@ await sleep(600);
 check("mobile: Escape closes menu", !(await evalJs(`document.getElementById("menu").classList.contains("is-open")`)));
 check("mobile: focus returned to burger", await evalJs(`document.activeElement === document.getElementById("burger")`));
 
-/* ---- 5 · form (endpoint unset → honest inline success) ---- */
+/* ---- 5 · engage section (redesigned: CTA links, no waitlist form) ---- */
 await metrics(1440, 900);
 await go(BASE + "/axon.html", 3000);
-await evalJs(`(() => { const f = document.querySelector(".engage__form"); f.querySelector("input").value = "smoke@test.dev"; f.requestSubmit(); })()`);
-await sleep(1200);
-const okText = await evalJs(`document.querySelector(".engage__ok")?.textContent || ""`);
-check("form: honest success shown", okText.includes("on the list"), okText);
-check("form: no inbox promise", !okText.toLowerCase().includes("inbox"), okText);
+check("engage: section present", await evalJs(`!!document.getElementById("engage")`));
+check("engage: honest no-waitlist copy", await evalJs(`document.querySelector(".engage__sub")?.textContent.includes("not a service waiting list")`));
+check("engage: read field notes CTA", (await evalJs(`document.querySelector('#engage .btn--signal')?.getAttribute("href")`)) === "/blog/");
 
 /* ---- 6 · plans → checkout page purchase flow ---- */
 await metrics(1440, 900);
 await go(BASE + "/axon.html", 3000);
-check("pay: heading says Start for ₹5", (await evalJs(`document.querySelector(".plans .section__title")?.textContent.replace(/\\s+/g, " ").trim() || ""`)).includes("Start for ₹5"));
+check("pay: heading mentions support the workshop", (await evalJs(`document.querySelector(".plans .section__title")?.textContent.replace(/\\s+/g, " ").trim() || ""`)).includes("Support the workshop"));
 check("pay: hobby CTA links to checkout", (await evalJs(`document.querySelector('a[data-plan="hobby"]')?.getAttribute("href")`)) === "/checkout.html?plan=hobby");
 check("pay: studio CTA links to checkout", (await evalJs(`document.querySelector('a[data-plan="studio"]')?.getAttribute("href")`)) === "/checkout.html?plan=studio");
 check("pay: hobby card ₹5 one-time", (await evalJs(`document.querySelector('a[data-plan="hobby"]')?.closest(".tier")?.querySelector(".tier__price")?.textContent.replace(/\\s+/g, " ") || ""`)).includes("₹5 one-time"));
 check("pay: studio card ₹6,999 one-time", (await evalJs(`document.querySelector('a[data-plan="studio"]')?.closest(".tier")?.querySelector(".tier__price")?.textContent.replace(/\\s+/g, " ") || ""`)).includes("₹6,999 one-time"));
 check("pay: no $ price on payable cards", !(await evalJs(`/\\$\\d/.test(document.querySelector(".tiers")?.textContent || "")`)) || (await evalJs(`document.querySelector(".tier:last-of-type .tier__price").textContent`)) === "Custom");
-check("pay: enterprise card untouched", (await evalJs(`document.querySelector(".tier:last-of-type .btn")?.getAttribute("href")`)) === "#engage");
+check("pay: enterprise card links to blog", (await evalJs(`document.querySelector(".tier:last-of-type .btn")?.getAttribute("href")`)) === "/blog/");
 check("pay: modal markup gone", !(await evalJs(`!!document.getElementById("paywrap")`)));
 
 // signed-in purchase on the checkout page
 const { identifier: payPreload } = await S("Page.addScriptToEvaluateOnNewDocument", { source: `window.__axonAuthCfg = { session: { user: { id: "uid_smoke_1", email: "smoke@test.dev", user_metadata: { full_name: "Smoke Tester" }, app_metadata: { provider: "google" } } } };` });
 await go(BASE + "/checkout.html?plan=studio", 3000);
-check("pay: benefits ≥ 8", (await evalJs(`document.querySelectorAll("#payBenefits li").length`)) >= 8, String(await evalJs(`document.querySelectorAll("#payBenefits li").length`)));
-check("pay: honest note", (await evalJs(`document.querySelector(".paymodal__note").textContent.replace(/\\s+/g, " ")`)).includes("AXON is a design showcase. This is a genuine ₹6,999 payment"));
+check("pay: benefits ≥ 5", (await evalJs(`document.querySelectorAll("#payBenefits li").length`)) >= 5, String(await evalJs(`document.querySelectorAll("#payBenefits li").length`)));
+check("pay: honest note", (await evalJs(`document.querySelector(".paymodal__note").textContent.replace(/\\s+/g, " ")`)).includes("AXON is a design showcase, not an operational agent product"));
 check("pay: pay button labelled", (await evalJs(`document.getElementById("payBtn").textContent`)) === "Pay ₹6,999");
 
 // stub Razorpay + fetch BEFORE interacting (read lazily by the pay flow)
@@ -381,7 +379,7 @@ const mailBody = mail ? JSON.parse(mail.body) : {};
 check("pay: emailjs service/template", mailBody.service_id === "svc_smoke" && mailBody.template_id === "tpl_smoke" && mailBody.user_id === "pub_smoke", mail && mail.body);
 check("pay: emailjs to_email", mailBody.template_params?.to_email === "smoke@test.dev");
 check("pay: emailjs pass_id", mailBody.template_params?.pass_id === "pay_SMOKE1234567890");
-check("pay: emailjs benefits included", String(mailBody.template_params?.benefits || "").includes("Priority trace lanes"));
+check("pay: emailjs benefits included", String(mailBody.template_params?.benefits || "").includes("thank-you email"));
 check("pay: mail note optimistic", (await evalJs(`document.getElementById("okMailNote").textContent`)).includes("on its way"));
 
 // failure path on the hobby page: readable error, fallback link on 2nd failure

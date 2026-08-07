@@ -1,97 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Guardrails are a feature, not friction — AXON Signal Log</title>
-  <meta name="description" content="The fastest way to lose an ops team's trust is an agent with root and no rules. Scoped permissions, approval gates, and why constraints make autonomy shippable." />
-  <link rel="canonical" href="https://stackwith.me/blog/guardrails-are-a-feature.html" />
-  <meta name="theme-color" content="#07080A" />
-  <meta property="og:type" content="article" />
-  <meta property="og:title" content="Guardrails are a feature, not friction" />
-  <meta property="og:description" content="Scoped permissions, approval gates, and why constraints make autonomy shippable." />
-  <meta property="og:url" content="https://stackwith.me/blog/guardrails-are-a-feature.html" />
-  <meta property="og:image" content="https://stackwith.me/og.png" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307080A'/%3E%3Cpath d='M4 16h6l3-8 6 16 3-8h6' fill='none' stroke='%23B8FF3C' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E" />
-  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../styles.css" />
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7262404901375077" crossorigin="anonymous"></script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": "Guardrails are a feature, not friction",
-    "description": "Scoped permissions, approval gates, and why constraints make autonomy shippable.",
-    "datePublished": "2026-05-28",
-    "author": { "@type": "Organization", "name": "AXON" },
-    "publisher": { "@type": "Organization", "name": "AXON", "logo": { "@type": "ImageObject", "url": "https://stackwith.me/og.png" } },
-    "mainEntityOfPage": "https://stackwith.me/blog/guardrails-are-a-feature.html",
-    "image": "https://stackwith.me/og.png"
-  }
-  </script>
-</head>
-<body class="no3d page">
-  <a class="skip-link" href="#main">Skip to content</a>
+---
+layout: layouts/post.njk
+tags: posts
+title: "Guardrails are a feature, not friction — stackwith.me"
+headline: "Guardrails are a feature, not friction"
+description: "A design note on scoped permissions, approval gates, immutable event records, and why AXON presents autonomy as a dial rather than a switch."
+excerpt: "Why bounded authority makes automation easier to trust, and how the AXON interface study represents scopes, gates, and evidence without claiming a live service."
+category: "Safety & product design"
+searchTerms: "guardrails permissions approval gates audit safety agent interface AXON"
+readingTime: 6
+published: "2026-05-28"
+modified: "2026-08-05"
+permalink: "blog/guardrails-are-a-feature.html"
+---
+<p>The most dramatic autonomy demo gives a system broad credentials and lets it act in one take. The most responsible product design asks the opposite question: how little authority does this task require, and where must a human remain in the loop?</p>
+<p>AXON is an interface showcase rather than an operational platform. Its guardrail language is a proposal for how a product should communicate limits—not evidence that those controls have been deployed.</p>
 
-  <header class="nav is-scrolled">
-    <a href="../index.html" class="nav__brand" aria-label="AXON home">
-      <span class="nav__mark" aria-hidden="true">
-        <svg viewBox="0 0 28 28"><path d="M2 14h5l3-7 6 14 3-7h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>
-      </span>
-      <span class="nav__word">AXON</span>
-    </a>
-    <nav class="nav__links" aria-label="Primary">
-      <a href="./index.html" data-index="01">Blog</a>
-      <a href="../about.html" data-index="02">About</a>
-      <a href="../contact.html" data-index="03">Contact</a>
-    </nav>
-    <div class="nav__right">
-      <a href="../index.html#engage" class="btn btn--signal">Get access</a>
-    </div>
-  </header>
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#paradox">Constraints can enable adoption</a></li>
+    <li><a href="#three">Three guardrail layers</a></li>
+    <li><a href="#gates">Approval gates as interface objects</a></li>
+    <li><a href="#dial">Autonomy as a dial</a></li>
+    <li><a href="#limits">Limits of the showcase</a></li>
+  </ul>
+</nav>
 
-  <main id="main" class="doc">
-    <p class="updated">[ SIGNAL LOG · SAFETY &amp; DESIGN ]</p>
-    <h1>Guardrails are a feature, not friction</h1>
-    <div class="post-meta"><span>2026-05-28</span><span>5 MIN READ</span><span>BY THE AXON TEAM</span></div>
+<h2 id="paradox">Constraints can enable adoption</h2>
+<p>A system that can touch everything is difficult to approve for anything important. A system with explicit, reviewable, and revocable scopes is easier to reason about. The constraint does not create capability; it creates a boundary around capability.</p>
+<blockquote>Nobody should receive root access simply because the demo looks impressive.</blockquote>
 
-    <p>There's a demo every autonomy vendor loves: the agent with god-mode credentials doing something impressive in one take. Ops engineers watch that demo differently than founders do. Founders see the capability. Ops engineers see the blast radius — because they're the ones who get paged when "impressive in one take" meets production on a bad day.</p>
-    <p>We design for the second audience. Not because we're cautious by temperament, but because we've watched what actually determines whether agents survive contact with a real organization: <b>bounded autonomy ships; unbounded autonomy gets rolled back.</b></p>
+<h2 id="three">Three guardrail layers</h2>
+<ul>
+  <li><b>Scoped permissions.</b> Define which APIs, records, actions, and thresholds are available for a task. A denial belongs in the event record because repeated denials reveal a mismatched scope or plan.</li>
+  <li><b>Approval gates.</b> Pause before irreversible or high-impact actions. The request should include evidence, expected effect, alternatives, and the exact operation awaiting approval.</li>
+  <li><b>Append-only activity records.</b> Capture what was proposed, approved, attempted, returned, and verified. Corrections should be additive rather than silently rewriting history.</li>
+</ul>
+<p>These ideas appear in the <a href="/axon.html#datasheet">AXON datasheet</a> and <a href="/axon.html#trace">trace mockup</a>. They are labelled as concept behavior.</p>
 
-    <h2>The paradox: constraints increase what agents are allowed to do</h2>
-    <p>Give a team an agent that <i>could</i> touch anything, and they'll scope it to a sandbox where it touches nothing meaningful. Give them an agent whose permissions are precise, auditable, and revocable, and they'll hand it the payment queue. The constraint isn't subtracted capability — it's the reason the capability gets deployed at all. Every serious security model figured this out decades ago; autonomy is just late to the lesson.</p>
+<h2 id="gates">Approval gates as interface objects</h2>
+<p>A gate that fires constantly becomes background noise. The interface therefore needs more than Approve and Reject. It should explain why the threshold was crossed, what changes after approval, how long the approval remains valid, and how to reduce future interruptions safely.</p>
+<p>One useful model is to treat a gate as a filtered trace with a pause button. The operator sees the relevant evidence and the exact boundary rather than reconstructing context from a separate log.</p>
 
-    <blockquote>Nobody trusts a new hire with root on day one. An agent shouldn't expect better.</blockquote>
+<h2 id="dial">Autonomy as a dial</h2>
+<p>The showcase uses a progression that could apply to a real product:</p>
+<ol>
+  <li><b>Observe</b> — collect evidence and propose an action.</li>
+  <li><b>Gated action</b> — act only after explicit approval.</li>
+  <li><b>Scoped action</b> — act within narrow, tested boundaries.</li>
+  <li><b>Expanded scope</b> — widen authority only when review history supports it.</li>
+</ol>
+<p>This progression is a product principle, not a statement that AXON users have followed it in production.</p>
 
-    <h2>The three guardrails that earn production access</h2>
-    <ul>
-      <li><b>Scoped permissions.</b> An agent's capability graph is explicit: these APIs, these tables, these actions, these limits. Scopes are compiled into the hot path (they cost microseconds, not a policy-server round trip) and every denied attempt lands in the trace — denials are signal, not noise.</li>
-      <li><b>Approval gates.</b> Some actions should pause for a human: refunds above a threshold, schema migrations, anything irreversible. A gate isn't the agent failing — it's the agent correctly locating the edge of its mandate. The request arrives with the full reasoning trace attached, so approval takes a minute, not a meeting.</li>
-      <li><b>Immutable audit.</b> Every action, every scope check, every gate decision — appended to a trace that can't be rewritten. When compliance asks "what can this thing do, and what has it done?", the answer is a query, not an archaeology project. (More on this in <a href="./why-automation-needs-an-audit-trail.html">the audit-trail essay</a>.)</li>
-    </ul>
-
-    <h2>Designing gates that people don't route around</h2>
-    <p>A guardrail that fires constantly trains humans to click approve without reading — the automation equivalent of alarm fatigue. We tune gates with the same discipline as alert thresholds: if a gate approves more than ~95% of the time, it's either scoped too wide or the threshold is wrong, and the trace data shows which. The goal is gates rare enough to be read, and informative enough to be decided in one screen.</p>
-
-    <h2>Autonomy is a dial, not a switch</h2>
-    <p>Teams start AXON agents in observe-mode (propose, don't act), graduate them to gated action, then widen scopes as the trace history builds a case. That progression — evidence, then trust, then authority — is exactly how humans earn production access. The instrument makes the evidence legible; the organization sets the pace. That's not friction. That's the feature.</p>
-
-    <p>See the guardrails row on the <a href="../index.html#datasheet">datasheet</a>, or read <a href="./engineering-sub-40ms-orchestration.html">how the fast path stays fast</a> with policy checks in it.</p>
-  </main>
-
-  <footer class="footer">
-    <div class="footer__base">
-      <span>© <span id="year">2026</span> AXON</span>
-      <span><a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a> · <a href="../about.html">About</a> · <a href="../contact.html">Contact</a></span>
-      <span>MADE&nbsp;WITH&nbsp;INTENT</span>
-    </div>
-  </footer>
-
-  <script src="../consent.js" defer></script>
-  <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
-</body>
-</html>
+<h2 id="limits">Limits of the showcase</h2>
+<div class="doc__card">
+  <p>The page does not implement a policy engine, cryptographic audit ledger, identity provider, connector sandbox, or approval service. A production implementation would also need race-condition handling, revocation semantics, policy versioning, secret isolation, and independent security review.</p>
+</div>
+<p>The design can still be evaluated on whether it tells the truth about authority. That is why unsupported customer and production claims were removed: disclosure is itself a guardrail.</p>

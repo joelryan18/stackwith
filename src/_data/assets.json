@@ -1,12 +1,13 @@
 {
-  "styles": "/assets/styles.UE4IYKUP.css",
+  "styles": "/assets/styles.HXJ4ZGGI.css",
   "gamecss": "/assets/game.HDLJHD2G.css",
   "main": "/assets/main.HJXOA52E.js",
-  "consent": "/assets/consent.2ZTCJWOF.js",
-  "checkout": "/assets/checkout.GUQWHE6B.js",
+  "consent": "/assets/consent.NWVATI7F.js",
+  "checkout": "/assets/checkout.2P35SEJJ.js",
   "anime": "/assets/anime.DLDCLZAW.js",
+  "blog": "/assets/blog.L2IBVC7U.js",
   "neural3d": "/assets/neural3d.IMCOE7JC.js",
-  "hub3d": "/assets/hub3d.F4CXHR64.js",
+  "hub3d": "/assets/hub3d.SS65SFHE.js",
   "about3d": "/assets/about3d.7GABPQUT.js",
   "lab3d": "/assets/lab3d.ILZHR3UJ.js",
   "game3d": "/assets/game3d.UVK2JCKB.js"

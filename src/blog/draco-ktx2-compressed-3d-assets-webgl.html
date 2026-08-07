@@ -1,0 +1,79 @@
+---
+layout: layouts/post.njk
+tags: posts
+title: "Draco geometry and KTX2 textures: compressed 3D assets for the browser — stackwith.me"
+headline: "Draco geometry and KTX2 textures: compressed 3D assets for the browser"
+description: "How the stackwith.me asset pipeline takes a Blender model through Draco compression and KTX2 UASTC encoding to achieve WebGL-ready 3D assets under 50 KB with full-quality matcap lighting."
+excerpt: "The build-3d.mjs pipeline used by lab.html and about.html: headless Blender export, Draco geometry compression, KTX2 UASTC matcap textures, and the gotchas that will take your geometry offline."
+category: "3D & asset pipeline"
+searchTerms: "Draco compression KTX2 UASTC Blender WebGL asset pipeline glTF geometry compression texture compression"
+readingTime: 9
+published: "2026-08-02"
+modified: "2026-08-05"
+permalink: "blog/draco-ktx2-compressed-3d-assets-webgl.html"
+---
+<p>Deep Signal's crystal shaft uses a custom Blender-authored geometry bundle — 1,600 instanced shards plus a bevelled gem hero — compressed down to 36 KB of geometry and two matcap textures totalling about 680 KB. Without compression, the raw geometry would be around 370 KB and the textures would be 12 MB. This note explains the pipeline that achieves those ratios and the specific settings that matter.</p>
+
+<nav class="post-toc" aria-label="Table of contents">
+  <p class="post-toc__title">CONTENTS</p>
+  <ul>
+    <li><a href="#pipeline">Pipeline overview</a></li>
+    <li><a href="#blender">Headless Blender export</a></li>
+    <li><a href="#draco">Draco geometry compression</a></li>
+    <li><a href="#ktx2">KTX2 UASTC texture encoding</a></li>
+    <li><a href="#runtime">Runtime loading</a></li>
+    <li><a href="#gotchas">Axis and colour gotchas</a></li>
+  </ul>
+</nav>
+
+<h2 id="pipeline">Pipeline overview</h2>
+<p>The pipeline runs outside the normal npm build — Blender and <code>toktx</code> are machine-level dependencies, not npm packages, so the generated files are committed to the repository rather than regenerated on the CI runner. This means the pipeline is run once when geometry changes and the resulting assets are versioned alongside the code.</p>
+<p>The steps are:</p>
+<ol>
+  <li>A Python script (<code>gen_crystals.py</code>) runs headlessly in Blender to create geometry, apply modifiers, bake a Cycles matcap render, and export a glTF with mesh data.</li>
+  <li><code>build-3d.mjs</code> applies Draco compression to the exported glTF via <code>gltf-pipeline</code>.</li>
+  <li><code>toktx</code> (from the KTX-Software package) encodes the PNG matcap renders to KTX2 UASTC format with optional Rate Distortion Optimization.</li>
+  <li>The resulting <code>.glb</code> and <code>.ktx2</code> files land in <code>src/assets/3d/</code> and are served as static assets.</li>
+</ol>
+
+<h2 id="blender">Headless Blender export</h2>
+<p>Running Blender headlessly means passing a Python script via <code>blender --background --python gen_crystals.py</code>. The script constructs geometry entirely through the <code>bmesh</code> API — no human-visible Blender interface is needed. This makes the geometry deterministic and reproducible: the same script run on any machine produces the same asset.</p>
+<p>The matcap bake happens inside the same script. A studio lighting rig (warm key, cyan rim, lime kick, magenta fill) is set up in Blender's scene, and a Cycles bake renders the result onto a UV sphere. The sphere's UV space maps directly to the view-normal space that the runtime shader samples when rendering with a matcap — top of the UV corresponds to the top of the normal hemisphere, which is the lit direction in eye space.</p>
+<p>The bake resolution matters more than the sample count. At 512², the matcap looks visibly soft. At 1024², it has enough detail for the spectral glints that make the crystal look sharp. Going to 2048² adds little visual quality but doubles the texture cost.</p>
+
+<h2 id="draco">Draco geometry compression</h2>
+<p>Draco is a Google-developed codec for 3D geometry that represents mesh positions as quantised integers on a prediction-coded connectivity graph. The practical ratio for this use case — crystalline prisms with clean topology and no UVs — is about 10:1 compared to raw binary glTF.</p>
+<p>The key settings are quantisation bits for position, normal, and colour attributes. Higher quantisation means smaller files but visible stepping artefacts in the geometry. The settings used here:</p>
+<div class="doc__card">
+  <ul>
+    <li>Position: 14 bits — sufficient for ~50-unit scenes without visible stepping.</li>
+    <li>Normal: 10 bits — normals have angular quantisation artefacts at low bit depths; 10 is the practical floor for smooth lighting.</li>
+    <li>Colour: 8 bits — vertex colours (the tint channel on the crystal variants) do not need more than 8 bits.</li>
+  </ul>
+</div>
+<p>Draco decompression happens in the browser via <code>DRACOLoader</code> from the three.js extras. The decoder WASM and JS are served from <code>/assets/3d/draco/</code> as static files — they must be on the same origin as the page for the worker to load them. The loader is configured to use the worker (not the inline fallback) for better performance:</p>
+<pre><code>const draco = new DRACOLoader();
+draco.setDecoderPath("/assets/3d/draco/");
+draco.setDecoderConfig({ type: "wasm" }); // prefer WASM over JS fallback</code></pre>
+
+<h2 id="ktx2">KTX2 UASTC texture encoding</h2>
+<p>KTX2 is a container format for GPU-compressed textures. The UASTC codec within it produces textures that can be transcoded to ASTC (mobile), BC7 (desktop), or ETC2 (fallback) at load time, depending on what the GPU supports. This means one KTX2 file serves all GPU families without shipping format-specific variants.</p>
+<p>The <code>toktx</code> command for a 1024² matcap looks like:</p>
+<pre><code>toktx --t2 --encode uastc --uastc_quality 3 \
+      --genmipmap --assign_oetf linear \
+      output.ktx2 input.png</code></pre>
+<p>The <code>--assign_oetf linear</code> flag is important for matcap textures, which are not sRGB images — they are already in linear light. Marking them as sRGB would cause the renderer to apply gamma correction a second time, washing out the dark values. The three.js <code>KTX2Loader</code> respects this metadata and sets <code>texture.colorSpace</code> accordingly.</p>
+<p>For the interior refraction matcap, Rate Distortion Optimization (<code>--uastc_rdo_l 1.5</code>) is added. RDO trades a small amount of quality for better entropy compression, reducing the DEFLATE'd file size by another 10–20% after the UASTC encoding. The quality loss is not perceptible on a texture that is already sampled through a <code>refract()</code> distortion.</p>
+
+<h2 id="runtime">Runtime loading</h2>
+<p>At runtime, three.js <code>GLTFLoader</code> with the <code>DRACOLoader</code> extension handles the glb, and <code>KTX2Loader</code> handles the matcap textures. Both are initialised once and reused across load calls — creating a new loader per asset wastes the WASM initialisation cost.</p>
+<p>The <code>KTX2Loader</code> requires a reference to the renderer to detect GPU texture format support:</p>
+<pre><code>const ktx2 = new KTX2Loader();
+ktx2.setTranscoderPath("/assets/3d/basis/");
+ktx2.detectSupport(renderer); // must be called before any load</code></pre>
+<p>The asset names in the GLB are used as a stable identifier for runtime placement. This means geometry names set in Blender (like <code>Shard0</code>, <code>Gate</code>, <code>Cradle</code>) become the API surface between the export pipeline and the runtime. If a name changes in Blender and the export runs without updating the runtime lookup, the node is silently missing rather than causing an error — the runtime guards all name lookups with a null check and falls back to the no-3D presentation if a required node is absent.</p>
+
+<h2 id="gotchas">Axis and colour gotchas</h2>
+<p>The most expensive mistake in this pipeline is the axis orientation trap. Blender uses a Z-up coordinate system internally, but glTF is Y-up by default. The Blender glTF exporter's <code>export_yup=True</code> default converts Z-up geometry to Y-up on export — which is correct for geometry designed in Blender's coordinate system. But if the geometry is authored in Y-up coordinates inside Blender (because the runtime wants Y-up without conversion), exporting with <code>export_yup=True</code> rotates it 90° and it arrives on its side.</p>
+<p>The fix is to set <code>export_yup=False</code> when exporting geometry authored in Blender's Y-up. This sounds backwards but is correct: you are telling the exporter not to apply the axis conversion that it would otherwise apply.</p>
+<p>The second gotcha is vertex colour defaults. A mesh with no <code>COLOR_0</code> attribute gets three.js's default white colour in a <code>ShaderMaterial</code> attribute — <code>attribute vec4 color</code> reads <code>(1,1,1,1)</code> instead of zero. For the crystal tint channel, this meant every crystal rendered at full tint before the per-instance aTint attribute was applied, washing the dark navy body white. The fix is to bake an explicit zero vertex colour on any mesh that uses the tint attribute but should start uncoloured.</p>

@@ -6,6 +6,8 @@
    has a context and the first frame has actually drawn.
    QA hook: window.__hubQ() -> { frames, screens, clock }. */
 
+const RENDER_MS = 40; // calm instrument refresh; keeps the page premium, not twitchy
+
 const ACID = "#B8FF3C";
 const ACID_DIM = "rgba(184,255,60,0.34)";
 const ACID_FAINT = "rgba(184,255,60,0.12)";
@@ -157,7 +159,7 @@ try {
     if (!reduced) {
       let last = 0;
       const loop = (ms) => {
-        if (!document.hidden && ms - last > 33) { last = ms; drawAll(ms / 1000); }
+        if (!document.hidden && ms - last >= RENDER_MS) { last = ms; drawAll(ms / 1000); }
         requestAnimationFrame(loop);
       };
       requestAnimationFrame(loop);
@@ -174,7 +176,7 @@ try {
       document.body.classList.add("wf-anim");
       const rio = new IntersectionObserver((es) => {
         for (const e of es) if (e.isIntersecting) { e.target.classList.add("in"); rio.unobserve(e.target); }
-      }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+      }, { threshold: 0.1, rootMargin: "0px 0px -8% 0px" });
       document.querySelectorAll("[data-wf]").forEach((el) => rio.observe(el));
     }
   } else {

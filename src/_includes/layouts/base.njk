@@ -7,7 +7,7 @@
   <meta name="description" content="{{ description }}" />
 
   <link rel="canonical" href="{{ site.url }}{{ page.url }}" />
-  <meta property="og:type" content="website" />
+  <meta property="og:type" content="{{ ogType or "website" }}" />
   <meta property="og:url" content="{{ site.url }}{{ page.url }}" />
   <meta property="og:title" content="{{ ogTitle or title }}" />
   <meta property="og:description" content="{{ description }}" />
@@ -15,6 +15,19 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="theme-color" content="{{ themeColor or "#07080A" }}" />
   {% if noindex %}<meta name="robots" content="noindex" />{% endif %}
+
+  <!-- Google Consent Mode v2 — must appear before any Google scripts -->
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied',
+    ad_personalization: 'denied', analytics_storage: 'denied',
+    wait_for_update: 800
+  });
+  </script>
+  <!-- Google AdSense — loaded unconditionally; consent mode gates personalisation -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7262404901375077" crossorigin="anonymous"></script>
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307080A'/%3E%3Cpath d='M4 16h6l3-8 6 16 3-8h6' fill='none' stroke='%23B8FF3C' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E" />
 
@@ -32,11 +45,15 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "AXON",
+    "@type": "WebSite",
+    "name": "{{ site.name }}",
     "url": "{{ site.url }}",
-    "description": "Autonomous AI agent instrument for software teams.",
-    "logo": "{{ site.url }}{{ site.ogImage }}"
+    "description": {{ site.description | json | safe }},
+    "author": {
+      "@type": "Person",
+      "name": "{{ site.author.name }}",
+      "url": "{{ site.url }}/about.html#author"
+    }
   }
   </script>
 </head>
