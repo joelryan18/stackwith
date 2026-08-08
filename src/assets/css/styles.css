@@ -229,6 +229,22 @@ body:not(.has-probe) .probe { display: none; }
 .menu a i { font-family: var(--mono); font-size: .9rem; color: var(--signal); font-style: normal; }
 .menu__cta { color: var(--muted); }
 
+/* --- nav auth (landing page sign-in) --- */
+.nav__signin { padding: .5rem .9rem; font-size: .75rem; }
+.nav__user { display: flex; align-items: center; gap: .55rem; font-family: var(--mono); font-size: .78rem; }
+.nav__user-avatar { color: var(--signal); font-size: .82rem; }
+.nav__user-name { color: var(--text-dim); max-width: 10ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav__signout { background: none; border: none; padding: 0; font-family: var(--mono); font-size: .72rem; color: var(--muted); cursor: pointer; text-decoration: underline; }
+.nav__signout:hover { color: var(--text); }
+/* mobile menu auth */
+.menu__signin { display: block; background: none; border: 1px solid var(--line-strong); border-radius: 4px; padding: .7rem 1rem; font-family: var(--mono); font-size: .82rem; color: var(--text); cursor: pointer; text-align: left; width: 100%; transition: border-color .3s var(--ease), color .3s var(--ease), background .3s var(--ease); }
+.menu__signin:hover { border-color: var(--signal); color: var(--signal); background: rgba(184,255,60,.05); }
+.menu__signin[aria-busy="true"] { opacity: .65; pointer-events: none; }
+.menu__user { display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: .82rem; color: var(--text-dim); padding: .25rem 0; }
+.menu__user-name b { color: var(--signal); font-weight: 500; }
+.menu__signout { background: none; border: none; padding: 0; font-family: var(--mono); font-size: .76rem; color: var(--muted); cursor: pointer; text-decoration: underline; }
+.menu__signout:hover { color: var(--text); }
+
 /* ---------- buttons ---------- */
 .btn {
   font-family: var(--mono); font-size: .8rem; letter-spacing: .03em;
@@ -456,20 +472,26 @@ body.anim [data-reveal] { opacity: 0; transform: translateY(22px); }
 /* ============================================================
    CHECKOUT PAGE (sign-in gate)
    ============================================================ */
-.checkout-main { display: grid; justify-items: center; }
+.checkout-main { display: grid; justify-items: center; align-items: start; padding: clamp(2.5rem, 7vw, 5rem) var(--pad); min-height: calc(100dvh - 64px - 56px); }
 .checkout { width: min(560px, 100%); }
+.paymodal { position: relative; z-index: 1; width: min(560px, 100%); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px; padding: clamp(1.5rem, 4vw, 2.5rem); }
 .paymodal__subtitle { font-family: var(--display); font-weight: 600; font-size: 1.15rem; }
-.paymodal__hint { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
-.payauth { display: flex; flex-direction: column; gap: 0.6rem; }
-.payauth .btn { justify-content: flex-start; gap: 0.6rem; }
+.paymodal__hint { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+.payauth { display: flex; flex-direction: column; gap: 0.75rem; }
+.payauth .btn { justify-content: flex-start; gap: 0.75rem; }
 .payauth__btn { background: none; cursor: pointer; }
-.payauth__tag { font-family: var(--mono); font-size: 0.72rem; color: var(--signal); }
-.payauth__soon { margin-left: auto; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); border: 1px solid var(--line); border-radius: 3px; padding: 0.15rem 0.45rem; }
-.payauth__btn:disabled { cursor: default; color: var(--faint); }
-.payauth__btn:disabled:hover { border-color: var(--line); color: var(--faint); background: none; }
-.payauth__btn:disabled .payauth__tag { color: var(--faint); }
-.payauth__divider { display: flex; align-items: center; gap: 0.8rem; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--faint); text-transform: uppercase; }
+/* de-emphasise providers that aren't available yet */
+.payauth__btn:disabled { cursor: default; opacity: 0.38; }
+.payauth__btn:disabled:hover { border-color: var(--line); color: var(--text); background: none; box-shadow: none; }
+.payauth__tag { font-family: var(--mono); font-size: 0.72rem; color: var(--signal); min-width: 2rem; }
+.payauth__btn:disabled .payauth__tag { color: inherit; }
+.payauth__soon { margin-left: auto; font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); border: 1px solid var(--line); border-radius: 3px; padding: 0.12rem 0.4rem; }
+.payauth__divider { display: flex; align-items: center; gap: 0.8rem; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--faint); text-transform: uppercase; margin: 0.25rem 0; }
 .payauth__divider::before, .payauth__divider::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+/* labelled field wrapper */
+.paymodal__field { display: flex; flex-direction: column; gap: 0.3rem; }
+.paymodal__label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; color: var(--text-dim); text-transform: uppercase; }
+.paymodal__form { display: flex; flex-direction: column; gap: 0.85rem; }
 .payauth__toggle { align-self: flex-start; background: none; border: none; padding: 0; font-family: var(--mono); font-size: 0.76rem; color: var(--muted); text-decoration: underline; cursor: pointer; }
 .payauth__toggle:hover { color: var(--text); }
 .paymodal__status { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }

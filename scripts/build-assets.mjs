@@ -40,9 +40,9 @@ const common = {
 const builds = [
   {
     ...common,
-    entryPoints: ["src/assets/js/main.js", "src/assets/js/consent.js", "src/assets/js/checkout.js", "src/assets/js/anime.js", "src/assets/js/blog.js"],
+    entryPoints: ["src/assets/js/main.js", "src/assets/js/consent.js", "src/assets/js/checkout.js", "src/assets/js/anime.js", "src/assets/js/blog.js", "src/assets/js/auth.js"],
     format: "iife",
-    plugins: [manifestPlugin({ "src/assets/js/main.js": "main", "src/assets/js/consent.js": "consent", "src/assets/js/checkout.js": "checkout", "src/assets/js/anime.js": "anime", "src/assets/js/blog.js": "blog" })],
+    plugins: [manifestPlugin({ "src/assets/js/main.js": "main", "src/assets/js/consent.js": "consent", "src/assets/js/checkout.js": "checkout", "src/assets/js/anime.js": "anime", "src/assets/js/blog.js": "blog", "src/assets/js/auth.js": "auth" })],
   },
   {
     ...common,

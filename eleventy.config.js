@@ -8,7 +8,11 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "src/assets/3d": "assets/3d" });
 
   // static files
-  for (const f of ["src/og.png", "src/robots.txt", "src/ads.txt", "src/CNAME", "src/404.html"]) {
+  for (const f of [
+    "src/og.png", "src/robots.txt", "src/ads.txt", "src/CNAME", "src/404.html",
+    "src/apple-touch-icon.png", "src/icon-192.png", "src/icon-512.png",
+    "src/site.webmanifest",
+  ]) {
     eleventyConfig.addPassthroughCopy(f);
   }
   // The custom 404 stays verbatim; editorial pages are rendered by Eleventy.

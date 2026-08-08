@@ -53,6 +53,12 @@ bodyClass: booting
     </nav>
     <div class="nav__right">
       <span class="nav__readout" aria-hidden="true">[ DESIGN SHOWCASE · NOT A LIVE SERVICE ]</span>
+      <button class="btn btn--ghost nav__signin" id="navSignIn" type="button">Sign in</button>
+      <div class="nav__user" id="navUser" hidden>
+        <span class="nav__user-avatar" aria-hidden="true">◈</span>
+        <span class="nav__user-name" id="navUserName"></span>
+        <button class="nav__signout" id="navSignOut" type="button">Sign out</button>
+      </div>
       <a href="#plans" class="btn btn--signal" data-magnet data-probe="SUPPORT">Support the workshop</a>
     </div>
     <button class="nav__burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
@@ -64,6 +70,11 @@ bodyClass: booting
     <a href="#pipeline"><i>02</i> Process</a>
     <a href="#plans"><i>03</i> Pricing</a>
     <a href="/anime.html"><i>04</i> Stackime</a>
+    <button class="menu__signin" id="menuSignIn" type="button">Sign in with Google</button>
+    <div class="menu__user" id="menuUser" hidden>
+      <span class="menu__user-name">Hello, <b id="menuUserName">—</b></span>
+      <button class="menu__signout" id="menuSignOut" type="button">Sign out</button>
+    </div>
     <a href="#plans" class="menu__cta">Support the workshop →</a>
   </div>
 
@@ -103,5 +114,6 @@ bodyClass: booting
   </footer>
 
   <script src="{{ assets.main }}" defer></script>
+  <script src="{{ assets.auth }}" defer></script>
   <script src="{{ assets.consent }}" defer></script>
   <script type="module" src="{{ assets.neural3d }}"></script>

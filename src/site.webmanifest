@@ -1,0 +1,30 @@
+{
+  "name": "stackwith.me",
+  "short_name": "stackwith.me",
+  "description": "Joel Ryan's one-person software workshop: browser projects and engineering notes.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#07080A",
+  "theme_color": "#07080A",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

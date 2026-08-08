@@ -23,8 +23,14 @@ noindex: true
             <button type="button" class="btn btn--ghost payauth__btn" data-auth="discord" disabled><span class="payauth__tag">[ DC ]</span> Continue with Discord<span class="payauth__soon">soon</span></button>
             <p class="payauth__divider">or use email</p>
             <form class="paymodal__form" id="authEmailForm">
-              <input type="email" id="authEmail" name="email" placeholder="you@company.com" aria-label="Email address" autocomplete="email" required />
-              <input type="password" id="authPassword" name="password" placeholder="Password (8+ characters)" aria-label="Password" autocomplete="current-password" required minlength="8" />
+              <div class="paymodal__field">
+                <label class="paymodal__label" for="authEmail">Email address</label>
+                <input type="email" id="authEmail" name="email" placeholder="you@company.com" autocomplete="email" required />
+              </div>
+              <div class="paymodal__field">
+                <label class="paymodal__label" for="authPassword">Password</label>
+                <input type="password" id="authPassword" name="password" placeholder="8+ characters" autocomplete="current-password" required minlength="8" />
+              </div>
               <button type="submit" class="btn btn--signal" id="authSubmit">Sign in</button>
               <button type="button" class="payauth__toggle" id="authToggle">New here? Create an account</button>
             </form>
