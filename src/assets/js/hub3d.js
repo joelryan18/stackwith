@@ -14,9 +14,30 @@ const ACID_FAINT = "rgba(184,255,60,0.12)";
 const PLATE = "#15160F";
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
 
 let frames = 0;
 let clockTicks = 0;
+
+/* ---------- restrained console tilt ---------- */
+function mountTilt() {
+  if (reduced || !finePointer) return 0;
+  const targets = [...document.querySelectorAll("[data-wf-tilt]")];
+  for (const el of targets) {
+    el.addEventListener("pointermove", (event) => {
+      const rect = el.getBoundingClientRect();
+      const nx = (event.clientX - rect.left) / rect.width - 0.5;
+      const ny = (event.clientY - rect.top) / rect.height - 0.5;
+      el.style.setProperty("--rx", `${(-ny * 4.5).toFixed(2)}deg`);
+      el.style.setProperty("--ry", `${(nx * 5.5).toFixed(2)}deg`);
+    });
+    el.addEventListener("pointerleave", () => {
+      el.style.setProperty("--rx", "0deg");
+      el.style.setProperty("--ry", "0deg");
+    });
+  }
+  return targets.length;
+}
 
 /* ---------- LCD clock ---------- */
 function startClock() {
@@ -137,6 +158,7 @@ const DRAW = { scope: drawScope, wave: drawWave, feed: drawFeed };
 
 /* ---------- boot ---------- */
 try {
+  mountTilt();
   const canvases = [...document.querySelectorAll("canvas.wf-screen")];
   const screens = canvases.map(mountScreen).filter(Boolean);
 
