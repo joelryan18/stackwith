@@ -9,6 +9,7 @@
     "build": "node scripts/build-assets.mjs && eleventy",
     "dev": "node scripts/build-assets.mjs && eleventy --serve",
     "watch:assets": "node scripts/build-assets.mjs --watch",
+    "test:homepage": "node scripts/test-homepage-redesign.mjs",
     "smoke": "node scripts/smoke.mjs",
     "qa": "node scripts/qa-shots.mjs"
   },
