@@ -1,184 +1,179 @@
 ---
 layout: layouts/hub.njk
-title: "stackwith.me — browser projects and engineering field notes"
-description: "Joel Ryan's one-person software workshop: interactive browser projects, transparent design showcases, and first-hand engineering notes backed by the code that built them."
-ogTitle: "stackwith.me — software, built like hardware"
+title: "stackwith.me - independent software with a pulse"
+description: "Joel Ryan's independent software workshop: ambitious browser products, interactive experiments, and the engineering notes behind every build."
+ogTitle: "stackwith.me - software with a pulse"
 permalink: "index.html"
 ---
-    <section class="wf-panel wf-section wf-hero">
-      <div class="wf-hero__top" data-wf>
-        <p class="wf-stamp wf-stamp--box">STACKWITH.ME · ONE-PERSON SOFTWARE WORKSHOP</p>
-        <p class="wf-stamp">EST 2026 · BUILT IN PUBLIC</p>
+
+<section class="studio-hero" id="top" aria-labelledby="studio-title">
+  <div class="studio-hero__grid">
+    <div class="studio-hero__copy">
+      <div class="studio-overline" data-wf>
+        <span class="studio-overline__dot" aria-hidden="true"></span>
+        <span>Independent software workshop</span>
+        <span>India / Worldwide</span>
       </div>
-      <div class="wf-hero__grid">
-        <div class="wf-hero__lead">
-          <p class="wf-kicker" data-wf>FIELD CATALOG / WORKSHOP ISSUE 01</p>
-          <h1 class="wf-title" data-wf><span class="ln">Software,</span><span class="ln">built like <em class="etch">hardware.</em></span></h1>
-          <p class="wf-hero__sub" data-wf>Browser software built in public: an autonomous-agent interface study, an anime community tracker, WebGL experiments, a playable arena, and the engineering notes behind them. <b>Joel Ryan designs, builds, tests, and documents the whole workshop.</b> Working code is separated from design targets on every page.</p>
-        </div>
-        <aside class="wf-hero__panel" data-wf aria-label="Workshop index">
-          <p class="wf-stamp">MANUFACTURED AS</p>
-          <ul class="wf-hero__index">
-            <li><b>01</b><span>AXON</span></li>
-            <li><b>02</b><span>STACKIME</span></li>
-            <li><b>03</b><span>FIELD NOTES</span></li>
-          </ul>
-          <p class="wf-hero__note">Precision-built interfaces, honest state, and working systems over theater.</p>
-        </aside>
+      <h1 class="studio-hero__title" id="studio-title" data-wf>
+        <span>Software</span>
+        <span>with a <em>pulse.</em></span>
+      </h1>
+      <p class="studio-hero__lede" data-wf>Ambitious browser products, interactive worlds, and the engineering notes behind them. Designed, built, tested, and documented by Joel Ryan.</p>
+      <div class="studio-hero__actions" data-wf>
+        <a class="studio-button studio-button--primary" href="#selected-work">Explore selected work <b aria-hidden="true">&darr;</b></a>
+        <a class="studio-button studio-button--quiet" href="/about.html">Meet the builder <b aria-hidden="true">&rarr;</b></a>
       </div>
-      <div class="wf-hero__base" data-wf>
-        <div class="wf-hero__acts">
-          <a class="wf-key wf-key--acid" href="/axon.html">Enter AXON <b>→</b></a>
-          <a class="wf-key" href="#catalog">Browse the catalog <b>↓</b></a>
+      <div class="studio-hero__foot" data-wf>
+        <span>One person. Full stack.</span>
+        <span>Real code. Clear labels.</span>
+        <span>Built in public since 2026.</span>
+      </div>
+    </div>
+
+    <div class="studio-hero__visual" data-wf>
+      <div class="studio-console" data-wf-tilt>
+        <div class="studio-console__top">
+          <span class="studio-console__live"><i aria-hidden="true"></i> System live</span>
+          <span>SWM / SIGNAL-01</span>
         </div>
-        <dl class="wf-lcd" aria-label="Workshop status">
-          <div><dt>Local time</dt><dd id="wfClock">--:--:--</dd></div>
-          <div><dt>Projects</dt><dd>4 documented</dd></div>
-          <div><dt>Test suite</dt><dd>300+ checks</dd></div>
-          <div><dt>Field notes</dt><dd>{{ collections.posts | length }} published</dd></div>
+        <div class="studio-console__screen">
+          <canvas class="wf-screen" data-screen="scope" aria-hidden="true"></canvas>
+          <div class="studio-console__crosshair" aria-hidden="true"></div>
+          <div class="studio-console__screen-copy">
+            <span>WORKSHOP SIGNAL</span>
+            <strong>MAKE IT<br>MEANINGFUL.</strong>
+          </div>
+        </div>
+        <div class="studio-console__readout">
+          <div><span>Local time</span><strong id="wfClock">--:--:--</strong></div>
+          <div><span>Build mode</span><strong>PUBLIC</strong></div>
+          <div><span>Quality gate</span><strong>300+ CHECKS</strong></div>
+        </div>
+      </div>
+      <div class="studio-float studio-float--one" aria-hidden="true"><span>01</span><b>DESIGN</b></div>
+      <div class="studio-float studio-float--two" aria-hidden="true"><span>02</span><b>ENGINEER</b></div>
+    </div>
+  </div>
+  <div class="studio-hero__index" aria-hidden="true">
+    <span>ISSUE 01 / 2026</span>
+    <span class="studio-hero__line"></span>
+    <span>SCROLL TO INSPECT</span>
+  </div>
+</section>
+
+<section class="studio-proof" aria-label="Workshop proof" data-wf>
+  <div class="studio-proof__intro">
+    <span class="studio-label">Operational proof</span>
+    <p>No inflated client wall. No mystery process. The work, tests, and trade-offs are visible.</p>
+  </div>
+  <dl class="studio-proof__facts">
+    <div><dt>Projects</dt><dd>4 documented</dd></div>
+    <div><dt>Verification</dt><dd>300+ checks</dd></div>
+    <div><dt>Field notes</dt><dd>{{ collections.posts | length }} published</dd></div>
+    <div><dt>Ownership</dt><dd>1 builder</dd></div>
+  </dl>
+</section>
+
+<section class="studio-work" id="selected-work" aria-labelledby="work-title">
+  <header class="studio-section-head" data-wf>
+    <div>
+      <p class="studio-label">Selected work / 01</p>
+      <h2 id="work-title">Built to be used.<br>Designed to be remembered.</h2>
+    </div>
+    <p>Products and experiments with distinct jobs, honest state, and enough technical depth to survive close inspection.</p>
+  </header>
+
+  <div class="studio-work__grid">
+    <article class="studio-project studio-project--lead" data-wf>
+      <div class="studio-project__copy">
+        <div class="studio-project__meta"><span>01 / PRODUCT CONCEPT</span><span>ELEVENTY + GSAP + THREE.JS</span></div>
+        <div>
+          <p class="studio-project__eyebrow">Autonomous-agent interface study</p>
+          <h3>AXON</h3>
+          <p>A cinematic, inspectable interface for sensing, planning, guarded action, and audit traces. The experience is real; the service concept is labelled honestly.</p>
+        </div>
+        <dl class="studio-project__specs">
+          <div><dt>Role</dt><dd>Product strategy, design, engineering</dd></div>
+          <div><dt>Signal</dt><dd>Inspectable decisions over black-box theatre</dd></div>
         </dl>
+        <a class="studio-project__link" href="/axon.html">Enter AXON <span aria-hidden="true">&rarr;</span></a>
       </div>
-    </section>
-
-    <section class="wf-units" id="catalog" aria-labelledby="catalog-title">
-      <div class="wf-head" data-wf>
-        <div>
-          <p class="wf-stamp">[ PROJECT CATALOG ]</p>
-          <h2 class="wf-h2" id="catalog-title">Three doors into the workshop.</h2>
-        </div>
-        <p class="wf-stamp">REAL CODE · CLEAR LABELS · SAME DESK</p>
-      </div>
-
-      <article class="wf-unit" data-wf>
-        <div class="wf-unit__meta">
-          <div class="wf-unit__id">
-            <p class="wf-stamp wf-stamp--box">UNIT 01</p>
-            <p class="wf-stamp">SN 2026-07-05</p>
-          </div>
-          <div>
-            <h3 class="wf-unit__name">AXON</h3>
-            <p class="wf-unit__role">Autonomous-agent interface study</p>
-          </div>
-          <p class="wf-unit__desc">A design showcase for how an inspectable agent product could explain sensing, planning, guarded action, and audit traces. The interface is real; the autonomous-agent service it depicts is not offered as working software.</p>
-          <dl class="wf-spec">
-            <div><dt>Function</dt><dd>Product concept + interactive trace demo</dd></div>
-            <div><dt>Interface</dt><dd>Eleventy, GSAP, Three.js</dd></div>
-            <div><dt>Support</dt><dd>Optional one-time supporter pass</dd></div>
-            <div><dt>Status</dt><dd>Design showcase, clearly labelled</dd></div>
-          </dl>
-          <a class="wf-key" href="/axon.html" data-unit="axon">Open unit 01 <b>→</b></a>
-        </div>
-        <div class="wf-unit__bay">
-          <div class="wf-face">
-            <i class="wf-screw"></i><i class="wf-screw"></i>
-            <div class="wf-face__bar"><span class="wf-led" aria-hidden="true"></span><b>AXON</b><i>MODEL AX-01</i></div>
-            <div class="wf-face__screen"><canvas class="wf-screen" data-screen="scope" aria-hidden="true"></canvas></div>
-            <div class="wf-face__foot"><span>Reasoning trace</span><span class="wf-face__vents" aria-hidden="true"></span></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="wf-unit" data-wf>
-        <div class="wf-unit__meta">
-          <div class="wf-unit__id">
-            <p class="wf-stamp wf-stamp--box">UNIT 02</p>
-            <p class="wf-stamp">SN 2026-07-08</p>
-          </div>
-          <div>
-            <h3 class="wf-unit__name">STACKIME</h3>
-            <p class="wf-unit__role">Anime tracker · community catalog</p>
-          </div>
-          <p class="wf-unit__desc">Track what you watch and browse a shared community catalog. Discover what's trending and airing through live AniList data — no account needed to look around, Google sign-in to keep your own list.</p>
-          <dl class="wf-spec">
-            <div><dt>Function</dt><dd>Personal lists + public catalog</dd></div>
-            <div><dt>Data</dt><dd>AniList GraphQL, live</dd></div>
-            <div><dt>Browsing</dt><dd>Open — no account required</dd></div>
-            <div><dt>Lists</dt><dd>Per-user, Google sign-in</dd></div>
-          </dl>
-          <a class="wf-key" href="/anime.html" data-unit="stackime">Open unit 02 <b>→</b></a>
-        </div>
-        <div class="wf-unit__bay">
-          <div class="wf-face">
-            <i class="wf-screw"></i><i class="wf-screw"></i>
-            <div class="wf-face__bar"><span class="wf-led" aria-hidden="true"></span><b>STACKIME</b><i>MODEL SK-02</i></div>
-            <div class="wf-face__screen"><canvas class="wf-screen" data-screen="wave" aria-hidden="true"></canvas></div>
-            <div class="wf-face__foot"><span>Now airing</span><span class="wf-face__vents" aria-hidden="true"></span></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="wf-unit" data-wf>
-        <div class="wf-unit__meta">
-          <div class="wf-unit__id">
-            <p class="wf-stamp wf-stamp--box">UNIT 03</p>
-            <p class="wf-stamp">SN 2026-05-28</p>
-          </div>
-          <div>
-            <h3 class="wf-unit__name">FIELD NOTES</h3>
-            <p class="wf-unit__role">Engineering blog</p>
-          </div>
-          <p class="wf-unit__desc">First-hand notes from the repository: browser fallbacks, WebGL performance, asset compression, security boundaries, testing, and the design reasoning behind AXON. Each note names what is implemented and what remains illustrative.</p>
-          <dl class="wf-spec">
-            <div><dt>Function</dt><dd>Evidence-backed engineering notes</dd></div>
-            <div><dt>Volume</dt><dd>{{ collections.posts | length }} articles published</dd></div>
-            <div><dt>Author</dt><dd>Joel Ryan</dd></div>
-            <div><dt>Paywall</dt><dd>None</dd></div>
-          </dl>
-          <a class="wf-key" href="/blog/" data-unit="blog">Open unit 03 <b>→</b></a>
-        </div>
-        <div class="wf-unit__bay">
-          <div class="wf-face">
-            <i class="wf-screw"></i><i class="wf-screw"></i>
-            <div class="wf-face__bar"><span class="wf-led" aria-hidden="true"></span><b>FIELD NOTES</b><i>MODEL FN-03</i></div>
-            <div class="wf-face__screen"><canvas class="wf-screen" data-screen="feed" aria-hidden="true"></canvas></div>
-            <div class="wf-face__foot"><span>Printing latest</span><span class="wf-face__vents" aria-hidden="true"></span></div>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <section class="wf-panel wf-section wf-practice" aria-labelledby="practice-title">
-      <div class="wf-head wf-head--flush" data-wf>
-        <div>
-          <p class="wf-stamp">[ QUALITY CONTROL ]</p>
-          <h2 class="wf-h2" id="practice-title">How the workshop runs.</h2>
-        </div>
-        <p class="wf-stamp">EVERY UNIT · EVERY SHIP</p>
-      </div>
-      <div class="wf-practice__grid wf-practice__copy">
-        <div class="wf-qc" data-wf>
-          <div class="wf-qc__row"><b>Written down first</b><span class="wf-qc__pass">QC · PASS</span></div>
-          <p>Plans and specs are committed to the repository before the code that implements them. When a build deviates from its plan, the deviation is recorded inline — and the blog documents what actually happened afterwards, including the mistakes and the dead ends.</p>
-        </div>
-        <div class="wf-qc" data-wf>
-          <div class="wf-qc__row"><b>Tested before deploy</b><span class="wf-qc__pass">QC · PASS</span></div>
-          <p>Every push runs a browser-level smoke suite across every page of this site — 266 checks as of July 2026, from checkout flows to WebGL boot markers. If a single check fails, nothing goes live. The suite count on this page is updated when the suite changes.</p>
-        </div>
-        <div class="wf-qc" data-wf>
-          <div class="wf-qc__row"><b>Honest by default</b><span class="wf-qc__pass">QC · PASS</span></div>
-          <p>Prices are exact, limits are stated, and "coming soon" means a disabled button — not a mailing-list trap. Copy is held to the same tolerance as the code: if a feature isn't finished, the page says so instead of pretending it exists.</p>
+      <div class="studio-project__machine">
+        <div class="studio-machine studio-machine--axon">
+          <span class="studio-machine__tag">AX-01 / REASONING TRACE</span>
+          <div class="studio-machine__screen"><canvas class="wf-screen" data-screen="scope" aria-hidden="true"></canvas></div>
+          <div class="studio-machine__base"><span>TRACE ONLINE</span><i aria-hidden="true"></i></div>
         </div>
       </div>
-    </section>
+    </article>
 
-    <section class="wf-notes" aria-labelledby="notes-title">
-      <div class="wf-head" data-wf>
-        <div>
-          <p class="wf-stamp">[ FIELD NOTES ]</p>
-          <h2 class="wf-h2" id="notes-title">Latest from the bench.</h2>
-        </div>
-        <a class="wf-notes__all" href="/blog/">All notes →</a>
-      </div>
-      <div class="wf-notes__list" data-wf>
-      {% for post in collections.posts | reverse %}
-        {% if loop.index <= 3 %}
-        <a class="wf-note" href="{{ post.url }}">
-          <time datetime="{{ post.data.published }}">{{ post.data.published }}</time>
-          <h3>{{ post.data.headline or post.data.title }}</h3>
-          <span class="wf-note__go" aria-hidden="true">↗</span>
-          <p>{{ post.data.excerpt }}</p>
-        </a>
-        {% endif %}
-      {% endfor %}
-      </div>
-    </section>
+    <article class="studio-project studio-project--stackime" data-wf>
+      <div class="studio-project__meta"><span>02 / LIVE PRODUCT</span><span>ANILIST + SUPABASE</span></div>
+      <div class="studio-project__mini-screen"><canvas class="wf-screen" data-screen="wave" aria-hidden="true"></canvas></div>
+      <p class="studio-project__eyebrow">Community anime tracker</p>
+      <h3>STACKIME</h3>
+      <p>Browse live AniList data without an account, then sign in when you want a personal list.</p>
+      <a class="studio-project__link" href="/anime.html">Open Stackime <span aria-hidden="true">&rarr;</span></a>
+    </article>
+
+    <article class="studio-project studio-project--experiment studio-project--lab" data-wf>
+      <div class="studio-project__meta"><span>03 / WEBGL LAB</span><span>BAKED 3D ASSETS</span></div>
+      <div class="studio-project__glyph" aria-hidden="true"><i></i><i></i><i></i></div>
+      <p class="studio-project__eyebrow">Interactive descent</p>
+      <h3>THE LAB</h3>
+      <p>A crystalline browser world with authored geometry, resonance, and a persistent field record.</p>
+      <a class="studio-project__link" href="/lab.html">Descend <span aria-hidden="true">&rarr;</span></a>
+    </article>
+
+    <article class="studio-project studio-project--experiment studio-project--arena" data-wf>
+      <div class="studio-project__meta"><span>04 / PLAYABLE SYSTEM</span><span>RAPIER + THREE.JS</span></div>
+      <div class="studio-project__radar" aria-hidden="true"><i></i><b></b><span></span></div>
+      <p class="studio-project__eyebrow">Browser arena</p>
+      <h3>SIGNAL STRIKE</h3>
+      <p>A playable arena with bots, physics, loadouts, post-processing, and a complete match loop.</p>
+      <a class="studio-project__link" href="/game.html">Enter arena <span aria-hidden="true">&rarr;</span></a>
+    </article>
+  </div>
+</section>
+
+<section class="studio-process" id="workflow" aria-labelledby="workflow-title">
+  <header class="studio-section-head studio-section-head--dark" data-wf>
+    <div>
+      <p class="studio-label">Working method / 02</p>
+      <h2 id="workflow-title">From first signal<br>to verified release.</h2>
+    </div>
+    <p>A small workshop can move quickly without becoming careless. Each stage leaves behind something concrete and reviewable.</p>
+  </header>
+  <ol class="studio-process__list">
+    <li class="studio-process__step" data-wf><span>01</span><div><h3>Frame</h3><p>Define the user, the honest promise, and the smallest meaningful version before pixels or code.</p></div><b>Brief + constraints</b></li>
+    <li class="studio-process__step" data-wf><span>02</span><div><h3>Shape</h3><p>Build a visual and interaction system with a clear hierarchy, purposeful motion, and responsive states.</p></div><b>System + prototype</b></li>
+    <li class="studio-process__step" data-wf><span>03</span><div><h3>Engineer</h3><p>Turn the approved direction into maintainable browser software with real data and explicit fallbacks.</p></div><b>Working product</b></li>
+    <li class="studio-process__step" data-wf><span>04</span><div><h3>Prove</h3><p>Run build, browser, accessibility, and behavior checks. Document what shipped and what remains illustrative.</p></div><b>Evidence + release</b></li>
+  </ol>
+</section>
+
+<section class="studio-journal" aria-labelledby="journal-title">
+  <div class="studio-journal__signal" data-wf>
+    <div class="studio-journal__screen"><canvas class="wf-screen" data-screen="feed" aria-hidden="true"></canvas></div>
+    <div class="studio-journal__caption"><span>FIELD FEED</span><b>{{ collections.posts | length }} NOTES / OPEN ACCESS</b></div>
+  </div>
+  <div class="studio-journal__content">
+    <header data-wf>
+      <p class="studio-label">Field notes / 03</p>
+      <h2 id="journal-title">The decisions behind the interface.</h2>
+      <p>First-hand engineering notes from the same repository: performance, WebGL, testing, guardrails, and design trade-offs.</p>
+    </header>
+    <div class="studio-journal__list" data-wf>
+    {% for post in collections.posts | reverse %}
+      {% if loop.index <= 3 %}
+      <a href="{{ post.url }}">
+        <time datetime="{{ post.data.published }}">{{ post.data.published }}</time>
+        <span>{{ post.data.headline or post.data.title }}</span>
+        <b aria-hidden="true">&nearr;</b>
+      </a>
+      {% endif %}
+    {% endfor %}
+    </div>
+    <a class="studio-text-link" href="/blog/">Read all field notes <span aria-hidden="true">&rarr;</span></a>
+  </div>
+</section>
