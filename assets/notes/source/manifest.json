@@ -1,0 +1,164 @@
+{
+  "fallback": [
+    {
+      "file": "src/_includes/layouts/lab.njk",
+      "sha256": "fef8e428f8701ebc91eb94d4d6d08552623a0e658e590d26b9891810ab27a901",
+      "firstLine": 1,
+      "lastLine": 30
+    },
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 1,
+      "lastLine": 115
+    },
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 426,
+      "lastLine": 438
+    },
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 650,
+      "lastLine": 665
+    }
+  ],
+  "camera": [
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 648,
+      "lastLine": 675
+    },
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 678,
+      "lastLine": 725
+    }
+  ],
+  "quality": [
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 438,
+      "lastLine": 449
+    },
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 648,
+      "lastLine": 693
+    }
+  ],
+  "instancing": [
+    {
+      "file": "src/assets/js/lab-ice.js",
+      "sha256": "4d27ceba0c7cd6ea78769efc97d65ff14838710ec3d04374f0ad7e39ff8b93f9",
+      "firstLine": 191,
+      "lastLine": 224
+    },
+    {
+      "file": "src/assets/js/lab-journey.js",
+      "sha256": "6c78ca4fb423ac4832c0f36ad1d00636f6ce836a3081db2a0ba600e6206068a5",
+      "firstLine": 186,
+      "lastLine": 233
+    }
+  ],
+  "audio": [
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 253,
+      "lastLine": 336
+    },
+    {
+      "file": "src/assets/js/lab3d.js",
+      "sha256": "3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca",
+      "firstLine": 375,
+      "lastLine": 421
+    },
+    {
+      "file": "src/assets/js/game3d.js",
+      "sha256": "166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868",
+      "firstLine": 277,
+      "lastLine": 337
+    }
+  ],
+  "assets": [
+    {
+      "file": "scripts/build-3d.mjs",
+      "sha256": "06fb92f953e210210f2e58bdd92146362a64b1201e9f9aeeaf2833911176e5ed",
+      "firstLine": 1,
+      "lastLine": 76
+    },
+    {
+      "file": "assets-src/lab/gen_crystals.py",
+      "sha256": "893830ea7c7725ec61b6fbbedf15a9f00c3d9ff4486f7b44aef2e8238601994c",
+      "firstLine": 212,
+      "lastLine": 228
+    }
+  ],
+  "multiplayer": [
+    {
+      "file": "src/assets/js/game3d.js",
+      "sha256": "166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868",
+      "firstLine": 176,
+      "lastLine": 227
+    },
+    {
+      "file": "src/assets/js/game3d.js",
+      "sha256": "166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868",
+      "firstLine": 1555,
+      "lastLine": 1570
+    },
+    {
+      "file": "src/assets/js/game3d.js",
+      "sha256": "166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868",
+      "firstLine": 1680,
+      "lastLine": 1725
+    },
+    {
+      "file": "src/assets/js/game3d.js",
+      "sha256": "166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868",
+      "firstLine": 1856,
+      "lastLine": 1890
+    }
+  ],
+  "testing": [
+    {
+      "file": "package.json",
+      "sha256": "98acc6c48b0f621a694c096e006a0d155c6289c1a5245f7edd23b77516537679",
+      "firstLine": 1,
+      "lastLine": 23
+    },
+    {
+      "file": ".github/workflows/deploy.yml",
+      "sha256": "b0467bc5ebab59eccebb0e0e3e06ede2d03fafb1f30165d055619277851360da",
+      "firstLine": 1,
+      "lastLine": 41
+    },
+    {
+      "file": "scripts/smoke.mjs",
+      "sha256": "bd5f0c58142e4a9bd34fc3920ab0221bc3b23af7ed05747df3e5093e58c95721",
+      "firstLine": 1,
+      "lastLine": 110
+    }
+  ],
+  "interface": [
+    {
+      "file": "src/axon.html",
+      "sha256": "0829df757be721580cf18db97c548dfec45a5383d2d042e062142aac9a4c437e",
+      "firstLine": 1,
+      "lastLine": 99
+    },
+    {
+      "file": "src/axon.html",
+      "sha256": "0829df757be721580cf18db97c548dfec45a5383d2d042e062142aac9a4c437e",
+      "firstLine": 180,
+      "lastLine": 258
+    }
+  ]
+}

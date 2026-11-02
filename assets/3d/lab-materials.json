@@ -1,0 +1,25 @@
+{
+  "name": "Snow Field Aerial",
+  "author": "Rob Tuytel",
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/snow_field_aerial",
+  "licenseUrl": "https://polyhaven.com/license",
+  "retrieved": "2026-09-23",
+  "usage": "Locally hosted snow surface color and OpenGL normal maps for the Lab glacier and frost masonry.",
+  "files": [
+    {
+      "path": "src/assets/3d/lab-snow-color.webp",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_field_aerial/snow_field_aerial_col_1k.jpg",
+      "transform": "Converted 1024x1024 JPEG to WebP with cwebp, quality 88, method 6. No AI generation.",
+      "sha256": "4b76faf5151e10c9e0562fc8009fd00866c3c629404513f737c4d7a724f085bc",
+      "bytes": 410884
+    },
+    {
+      "path": "src/assets/3d/lab-snow-normal.webp",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_field_aerial/snow_field_aerial_nor_gl_1k.jpg",
+      "transform": "Converted 1024x1024 JPEG to WebP with cwebp, quality 92, method 6. No AI generation.",
+      "sha256": "9b75be2d57210cc041c89051f77d4abbc4e820db329c9bc540bf4a3a4d52937b",
+      "bytes": 297852
+    }
+  ]
+}

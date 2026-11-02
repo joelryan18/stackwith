@@ -1,0 +1,10 @@
+{
+  "title": "Astronaut",
+  "author": "Poly",
+  "source": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
+  "attributionEvidence": "https://modelviewer.dev/examples/scenegraph/",
+  "originalSource": "https://poly.google.com/view/dLHpzNdygsg",
+  "license": "https://creativecommons.org/licenses/by/2.0/",
+  "modification": "GLB retained; pose, rig, materials and equipment adapted in Orbit runtime.",
+  "sha256": "313d48882e2ba7bb25a340dbfd3d6f9bbc7f012372d54f518dc52e4299e3a24e"
+}

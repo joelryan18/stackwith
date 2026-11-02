@@ -1,0 +1,204 @@
+stackwith.me — fallback reference excerpts
+Source snapshot: 2026-10-28
+
+These are excerpts from the local source used to prepare this edition.
+They describe code, not a successful browser test or the state of a live service.
+Line numbers refer to the original file. Full-file SHA-256 identifies that version.
+
+
+File: src/_includes/layouts/lab.njk
+SHA-256: fef8e428f8701ebc91eb94d4d6d08552623a0e658e590d26b9891810ab27a901
+Lines 1–30
+
+   1  ---
+   2  layout: layouts/base.njk
+   3  bodyClass: page lab-body
+   4  viewportFit: true
+   5  extraStylesheet: labcss
+   6  themeColor: "#AAB4BD"
+   7  ---
+   8  <a class="skip-link" href="#main">Skip to experience</a>
+   9  <canvas class="labfx" id="labfx" aria-hidden="true"></canvas>
+  10  <div class="lab-veil" aria-hidden="true"></div>
+  11  <div class="lab-intro" id="labIntro">
+  12    <a class="lab-intro__home" href="/">stackwith.me</a>
+  13    <div class="lab-intro__core"><b class="lab-intro__word">Deep signal.</b><p>Preparing the frozen world</p></div>
+  14    <div class="lab-intro__log" aria-hidden="true"></div>
+  15    <div class="lab-intro__meta"><span class="lab-intro__pct" aria-hidden="true">000</span><i class="lab-intro__bar" aria-hidden="true"><b></b></i><button class="lab-intro__skip" id="labSkip" type="button">Skip intro</button></div>
+  16  </div>
+  17  <noscript><style>.lab-intro, .lab-controls, .lab-hud, .lab-caption, .lab-chapters, .lab-cue, .labfx, .lab-veil, .lab-end, .lab-charge { display: none !important; }</style></noscript>
+  18  <header class="lab-header">
+  19    <a class="lab-brand" href="/" aria-label="Lab, by stackwith.me. Go home."><span class="lab-brand__word">lab<span aria-hidden="true">.</span></span><span class="lab-brand__by">by stackwith.me</span></a>
+  20    <div class="lab-header__links">
+  21      <a class="lab-projects-link" href="/projects.html">All projects</a>
+  22      <details class="lab-menu" id="labMenu">
+  23        <summary>Index <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M10 4v12"/></svg></summary>
+  24        <nav aria-label="Primary"><a href="/">Home</a>
+  25          {%- for item in nav.primary %}<a href="{{ item.href }}"{% if navCurrent == item.key %} aria-current="page"{% endif %}>{{ item.label }}</a>{%- endfor %}
+  26          <a href="{{ nav.contact.href }}">{{ nav.contact.label }}</a>
+  27        </nav>
+  28      </details>
+  29    </div>
+  30  </header>
+
+
+File: src/assets/js/lab3d.js
+SHA-256: 3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca
+Lines 1–115
+
+   1  /* Deep Signal — one frozen world, a sequence of suspended specimens, and
+   2     a remembered source. The semantic page stays usable until a frame renders. */
+   3  
+   4  import * as THREE from "three";
+   5  import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+   6  import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+   7  import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+   8  import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+   9  import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+  10  import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+  11  import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+  12  import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
+  13  import { createFrozenLandscape } from "./lab-environment.js";
+  14  import { ICE_ARRIVAL_DURATION } from "./lab-ice.js";
+  15  import { createFrozenExhibits, sampleLabJourney } from "./lab-journey.js";
+  16  import { createIceEnvironmentTexture } from "./lab-ice-volume.js";
+  17  import { GlacierAtmospherePass } from "./lab-atmosphere.js";
+  18  import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+  19  import Lenis from "@studio-freight/lenis";
+  20  import gsap from "gsap";
+  21  
+  22  const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+  23  const reduced = motionQuery.matches;
+  24  const dataSaving = !!navigator.connection?.saveData;
+  25  const readingRequested = new URLSearchParams(location.search).get("view") === "reading";
+  26  let motionPaused = false, renderRequested = true, live = false, bootCancelled = false;
+  27  let fallbackReason = null, disposeWorld = null;
+  28  const requestFrame = () => { renderRequested = true; };
+  29  const isInterface = (e) => e.target instanceof Element && !!e.target.closest("a,button,summary,nav,details,input,select,textarea");
+  30  window.__labQ = () => ({ rendered: false, fallback: fallbackReason, paused: motionPaused });
+  31  const hoverFine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  32  
+  33  const CHAPTERS = ["Surface", "Quartz", "Echo", "Source", "Your trace"];
+  34  const F = CHAPTERS.length - 1;
+  35  
+  36  
+  37  document.body.classList.add("fx-dom");
+  38  
+  39  /* ------------------------------------------------------------
+  40     scroll — Lenis inertial + velocity feed. Exposed for smoke.
+  41     ------------------------------------------------------------ */
+  42  let lenis = null;
+  43  let scrollVel = 0;
+  44  if (!reduced && !dataSaving && !readingRequested) {
+  45    lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 0.88 });
+  46    lenis.on("scroll", (e) => { scrollVel = e.velocity || 0; });
+  47    const raf = (t) => { if (!lenis) return; lenis.raf(t); requestAnimationFrame(raf); };
+  48    requestAnimationFrame(raf);
+  49    window.__labLenis = lenis;
+  50  }
+  51  
+  52  /* descent progress 0..F from raw scroll */
+  53  const progress = () => {
+  54    const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+  55    return Math.min(F, Math.max(0, (scrollY / max) * F));
+  56  };
+  57  
+  58  /* ------------------------------------------------------------
+  59     boot loader — the % is REAL asset progress (LoadingManager),
+  60     smoothed; min hold so the reveal never strobes on cache hits.
+  61     ------------------------------------------------------------ */
+  62  const intro = document.getElementById("labIntro");
+  63  const pctEl = intro?.querySelector(".lab-intro__pct");
+  64  const barEl = intro?.querySelector(".lab-intro__bar b");
+  65  const shown = { v: 0 };
+  66  let loadTarget = 0; // 0..1 true progress
+  67  const paintPct = () => {
+  68    if (pctEl) pctEl.textContent = String(Math.round(shown.v)).padStart(3, "0");
+  69    if (barEl) barEl.style.transform = `scaleX(${shown.v / 100})`;
+  70  };
+  71  const tickPct = () => { // ease displayed toward target, never backwards
+  72    shown.v += (loadTarget * 100 - shown.v) * 0.06;
+  73    paintPct();
+  74    if (!intro || intro.classList.contains("is-done")) return;
+  75    requestAnimationFrame(tickPct);
+  76  };
+  77  if (intro && !reduced) requestAnimationFrame(tickPct);
+  78  
+  79  const bootAt = performance.now();
+  80  let introExitQueued = false, entranceReady = !intro;
+  81  /* v5 TRANSMISSION — the loader doubles as a live boot transcript.
+  82     Every line is a REAL milestone stamped with real elapsed seconds;
+  83     the fiction is in the phrasing, never in the facts. */
+  84  const logEl = intro?.querySelector(".lab-intro__log");
+  85  let bootLines = 0;
+  86  const bootLine = (msg) => {
+  87    if (!logEl || intro.classList.contains("is-done")) return;
+  88    const el = document.createElement("span");
+  89    el.textContent = `T+${((performance.now() - bootAt) / 1000).toFixed(3)} · ${msg}`;
+  90    logEl.appendChild(el);
+  91    bootLines += 1;
+  92    while (logEl.children.length > 4) logEl.removeChild(logEl.firstChild);
+  93  };
+  94  bootLine("RUNTIME ONLINE");
+  95  const releaseIntro = () => {
+  96    if (introExitQueued) return;
+  97    introExitQueued = true;
+  98    const finish = () => {
+  99      if (entranceReady && intro) return;
+ 100      entranceReady = true;
+ 101      intro?.remove();
+ 102      document.body.classList.add("lab-in");
+ 103      dispatchEvent(new CustomEvent("lab:hero"));
+ 104      requestFrame();
+ 105    };
+ 106    if (!intro || reduced) { finish(); return; }
+ 107    const fire = () => {
+ 108      shown.v = Math.max(shown.v, loadTarget * 100); paintPct();
+ 109      intro.classList.add("is-done");
+ 110      // Start the world only once the loading sheet is actually out of view.
+ 111      // Transitionend is not guaranteed when Pause or a browser tab suppresses
+ 112      // transitions, so the same idempotent finish has a bounded fallback.
+ 113      intro.addEventListener("transitionend", event => {
+ 114        if (event.target === intro && event.propertyName === "clip-path") finish();
+ 115      });
+
+
+File: src/assets/js/lab3d.js
+SHA-256: 3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca
+Lines 426–438
+
+ 426    document.getElementById("labChargePanel").hidden = true;
+ 427    document.getElementById("labReadingReason").textContent = reason;
+ 428    window.__labQ = () => ({ rendered: false, fallback: fallbackReason, paused: true });
+ 429    dispatchEvent(new CustomEvent("lab:motion", { detail: true }));
+ 430    releaseIntro();
+ 431  };
+ 432  if (!canvas || reduced || dataSaving || readingRequested) {
+ 433    no3d(reduced ? "The still edition. Your reduced-motion preference is on." : dataSaving ? "The still edition. Your data-saving preference is on." : readingRequested ? "The still edition. Five chapters, at your own pace." : undefined);
+ 434  } else {
+ 435    start().catch((err) => { console.warn("[labfx] 3D disabled:", err); no3d(); });
+ 436  }
+ 437  motionQuery.addEventListener("change", (e) => { if (e.matches) no3d("The still edition. Your reduced-motion preference is on."); });
+ 438  
+
+
+File: src/assets/js/lab3d.js
+SHA-256: 3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca
+Lines 650–665
+
+ 650    const sample = { position: new THREE.Vector3(), target: new THREE.Vector3(), fov: 45 };
+ 651    sampleLabJourney(0, W / H, sample);
+ 652    const currentPosition = sample.position.clone(), currentTarget = sample.target.clone();
+ 653    listen(document, "visibilitychange", () => { hidden = document.hidden; if (hidden) chargeRelease(true); requestFrame(); });
+ 654    listen(window, "resize", () => {
+ 655      W = innerWidth; H = innerHeight; camera.aspect = W / H; camera.updateProjectionMatrix();
+ 656      setSize(dprNow); requestFrame();
+ 657    });
+ 658    listen(canvas, "webglcontextlost", event => { event.preventDefault(); no3d("The 3D connection was interrupted. The still edition is ready below."); });
+ 659    listen(window, "pagehide", event => {
+ 660      mem.lastISO = new Date().toISOString(); memSave();
+ 661      if (!event.persisted) disposeWorld?.();
+ 662    });
+ 663  
+ 664    window.__labQ = () => ({
+ 665      rendered: live, frames, paused: motionPaused, time: +labT.toFixed(3), chapter: activeCh,

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>stackwith.me Field Notes</title>
+  <subtitle>Practical notes on browser rendering, reliability, and interface design from Joel Ryan's workshop.</subtitle>
+  <link href="https://stackwith.me/blog/feed.xml" rel="self" />
+  <link href="https://stackwith.me/blog/" />
+  <id>https://stackwith.me/blog/</id>
+  <updated>2026-10-28T00:00:00Z</updated>
+  <author><name>Joel Ryan</name><uri>https://stackwith.me/about.html#author</uri></author>
+
+  <entry>
+    <title>Label a prototype so readers can evaluate the real work</title>
+    <link href="https://stackwith.me/blog/building-honest-product-interface-study.html" />
+    <id>https://stackwith.me/blog/building-honest-product-interface-study.html</id>
+    <published>2026-08-07T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Use AXON to separate live interface behavior, simulated data, design targets, and unavailable actions, with a practical copy and review method.</summary>
+  </entry>
+
+  <entry>
+    <title>Camera smoothing: exponential damping or a spring?</title>
+    <link href="https://stackwith.me/blog/spring-camera-threejs.html" />
+    <id>https://stackwith.me/blog/spring-camera-threejs.html</id>
+    <published>2026-08-06T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Compare two camera-follow models with a working response plot, a frame-rate-independent damping formula, and an exact critically damped spring step.</summary>
+  </entry>
+
+  <entry>
+    <title>Browser multiplayer with Supabase: transport, state, and trust</title>
+    <link href="https://stackwith.me/blog/browser-multiplayer-supabase-realtime.html" />
+    <id>https://stackwith.me/blog/browser-multiplayer-supabase-realtime.html</id>
+    <published>2026-08-05T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Follow Signal Strike’s relay and browser-host design, work through snapshot interpolation and message counts, and identify which guarantees the architecture cannot provide.</summary>
+  </entry>
+
+  <entry>
+    <title>Three.js instancing: what one draw call actually means</title>
+    <link href="https://stackwith.me/blog/instanced-mesh-threejs-crystals.html" />
+    <id>https://stackwith.me/blog/instanced-mesh-threejs-crystals.html</id>
+    <published>2026-08-04T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Build a valid instance batch, use per-instance attributes, and account for geometry families, shadows, and animated bounds when counting rendering work.</summary>
+  </entry>
+
+  <entry>
+    <title>A WebGL quality governor that measures its own limits</title>
+    <link href="https://stackwith.me/blog/webgl-adaptive-quality-governor.html" />
+    <id>https://stackwith.me/blog/webgl-adaptive-quality-governor.html</id>
+    <published>2026-08-03T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Inspect the Lab’s real quality thresholds, calculate the pixel cost of DPR, and distinguish frame pacing from GPU time before changing rendering quality.</summary>
+  </entry>
+
+  <entry>
+    <title>Ship compressed 3D assets without breaking colour or coordinates</title>
+    <link href="https://stackwith.me/blog/draco-ktx2-compressed-3d-assets-webgl.html" />
+    <id>https://stackwith.me/blog/draco-ktx2-compressed-3d-assets-webgl.html</id>
+    <published>2026-08-02T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Follow the repository’s Blender, Draco, and KTX2 pipeline, inspect actual file sizes, and avoid double colour conversion, axis errors, and misleading compression claims.</summary>
+  </entry>
+
+  <entry>
+    <title>A browser chime with a real start, stop, and voice limit</title>
+    <link href="https://stackwith.me/blog/synthesizing-game-audio-web-audio-api.html" />
+    <id>https://stackwith.me/blog/synthesizing-game-audio-web-audio-api.html</id>
+    <published>2026-07-30T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Build an opt-in Web Audio chime with an envelope, explicit cleanup, and bounded overlap, using the Lab’s actual sound graph as a reference.</summary>
+  </entry>
+
+  <entry>
+    <title>Test a WebGL page without mistaking a hook for proof</title>
+    <link href="https://stackwith.me/blog/smoke-testing-with-cdp.html" />
+    <id>https://stackwith.me/blog/smoke-testing-with-cdp.html</id>
+    <published>2026-07-25T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Use browser diagnostics, bounded polling, rendered inspection, and recorded source versions to distinguish a successful build from a working WebGL experience.</summary>
+  </entry>
+
+  <entry>
+    <title>Make a WebGL page useful when the scene cannot run</title>
+    <link href="https://stackwith.me/blog/webgl-no-js-fallback.html" />
+    <id>https://stackwith.me/blog/webgl-no-js-fallback.html</id>
+    <published>2026-07-22T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Build the reading page first, enhance it after a real frame, and handle disabled scripts, reduced motion, failed assets, and lost graphics contexts.</summary>
+  </entry>
+
+  <entry>
+    <title>Design an action record that can explain an uncertain outcome</title>
+    <link href="https://stackwith.me/blog/why-automation-needs-an-audit-trail.html" />
+    <id>https://stackwith.me/blog/why-automation-needs-an-audit-trail.html</id>
+    <published>2026-06-24T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Work through a proposed publishing action, distinguish intent from execution, and design an audit record that handles timeouts, retries, redaction, and verification.</summary>
+  </entry>
+
+  <entry>
+    <title>Turn a latency headline into a testable budget</title>
+    <link href="https://stackwith.me/blog/engineering-sub-40ms-orchestration.html" />
+    <id>https://stackwith.me/blog/engineering-sub-40ms-orchestration.html</id>
+    <published>2026-06-10T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Define a hand-off boundary, allocate a hypothetical 40 ms budget, and plan percentile measurements without presenting a design target as a production result.</summary>
+  </entry>
+
+  <entry>
+    <title>Make an approval mean one specific action</title>
+    <link href="https://stackwith.me/blog/guardrails-are-a-feature.html" />
+    <id>https://stackwith.me/blog/guardrails-are-a-feature.html</id>
+    <published>2026-05-28T00:00:00Z</published>
+    <updated>2026-10-28T00:00:00Z</updated>
+    <summary>Design an approval contract around a resource, revision, scope, and expiry; then handle changed inputs, revocation, duplicate requests, and uncertain execution.</summary>
+  </entry>
+
+</feed>

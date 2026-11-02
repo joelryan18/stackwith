@@ -1,0 +1,111 @@
+stackwith.me — assets reference excerpts
+Source snapshot: 2026-10-28
+
+These are excerpts from the local source used to prepare this edition.
+They describe code, not a successful browser test or the state of a live service.
+Line numbers refer to the original file. Full-file SHA-256 identifies that version.
+
+
+File: scripts/build-3d.mjs
+SHA-256: 06fb92f953e210210f2e58bdd92146362a64b1201e9f9aeeaf2833911176e5ed
+Lines 1–76
+
+   1  // build-3d.mjs — authored-asset pipeline (/lab.html "Deep Signal" +
+   2  // /about.html "Signal Field v5 — Machined").
+   3  // Blender (headless) → raw glb + matcap png → Draco glb + KTX2 texture
+   4  // → src/assets/3d/ (committed; NOT part of npm run build — Blender and
+   5  // toktx are machine deps, the outputs are checked in).
+   6  //
+   7  //   node scripts/build-3d.mjs            # all bundles incl. Blender
+   8  //   node scripts/build-3d.mjs about      # one bundle by name
+   9  //   node scripts/build-3d.mjs --no-bake  # reuse /tmp raw outputs
+  10  //
+  11  // Machine deps: /opt/homebrew/bin/blender (5.x), /opt/homebrew/bin/toktx
+  12  // (KTX-Software, hand-installed — no brew formula), npx gltf-transform.
+  13  
+  14  import { execFileSync } from "node:child_process";
+  15  import { cpSync, mkdirSync, existsSync, statSync } from "node:fs";
+  16  
+  17  const BLENDER = "/opt/homebrew/bin/blender";
+  18  const TOKTX = "/opt/homebrew/bin/toktx";
+  19  const OUT = "src/assets/3d";
+  20  
+  21  // one entry per page bundle: Blender authoring script + its outputs
+  22  const BUNDLES = {
+  23    worlds: { script: "assets-src/worlds/gen_atlas.py", tmp: "/tmp/worlds-assets", glb: "worlds-atlas", matcap: null },
+  24    // rdo: v3 matcaps are 1024² — UASTC RDO halves them (~840→~445 KB) with no visible loss on soft gradients
+  25    lab: { script: "assets-src/lab/gen_crystals.py", tmp: "/tmp/lab-assets", glb: "lab-crystals", matcap: "lab-matcap", extraMatcaps: ["lab-matcap-int"], rdo: true },
+  26    about: { script: "assets-src/about/gen_instrument.py", tmp: "/tmp/about-assets", glb: "about-instrument", matcap: "about-matcap" },
+  27    // v6 ruin set-pieces: geometry only — reuses the lab matcaps at runtime
+  28    labgeo: { script: "assets-src/lab/gen_setpieces.py", tmp: "/tmp/labgeo-assets", glb: "lab-setpieces", matcap: null },
+  29  };
+  30  
+  31  const run = (cmd, args) => {
+  32    console.log(`[3d] ${cmd.split("/").pop()} ${args.join(" ")}`);
+  33    execFileSync(cmd, args, { stdio: "inherit" });
+  34  };
+  35  const kb = (p) => `${(statSync(p).size / 1024).toFixed(1)} KB`;
+  36  
+  37  const only = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+  38  const picked = Object.entries(BUNDLES).filter(([name]) => !only.length || only.includes(name));
+  39  if (!picked.length) { console.error(`[3d] unknown bundle "${only}" — have: ${Object.keys(BUNDLES).join(", ")}`); process.exit(1); }
+  40  
+  41  mkdirSync(`${OUT}/draco`, { recursive: true });
+  42  mkdirSync(`${OUT}/basis`, { recursive: true });
+  43  
+  44  for (const [name, b] of picked) {
+  45    mkdirSync(b.tmp, { recursive: true });
+  46  
+  47    // 1 · author in Blender (deterministic)
+  48    if (!process.argv.includes("--no-bake")) {
+  49      run(BLENDER, ["--background", "--factory-startup", "--python", b.script, "--", b.tmp]);
+  50    }
+  51    for (const f of [`${b.tmp}/${b.glb}-raw.glb`, ...(b.matcap ? [`${b.tmp}/${b.matcap}.png`] : [])]) {
+  52      if (!existsSync(f)) { console.error(`[3d] missing ${f} — run without --no-bake`); process.exit(1); }
+  53    }
+  54  
+  55    // 2 · Draco-compress the geometry
+  56    run("npx", ["gltf-transform", "draco", `${b.tmp}/${b.glb}-raw.glb`, `${OUT}/${b.glb}.glb`]);
+  57  
+  58    // 3 · KTX2 the matcap(s) (UASTC — all soft gradients, ETC1S bands)
+  59    for (const m of [...(b.matcap ? [b.matcap] : []), ...(b.extraMatcaps || [])]) {
+  60      if (!existsSync(`${b.tmp}/${m}.png`)) { console.error(`[3d] missing ${b.tmp}/${m}.png — run without --no-bake`); process.exit(1); }
+  61      run(TOKTX, ["--t2", "--encode", "uastc", "--uastc_quality", "3",
+  62        ...(b.rdo ? ["--uastc_rdo_l", "1.5", "--uastc_rdo_d", "8192"] : []),
+  63        "--zcmp", "19", "--genmipmap", "--assign_oetf", "srgb", `${OUT}/${m}.ktx2`, `${b.tmp}/${m}.png`]);
+  64    }
+  65  
+  66    console.log(`[3d] ${name} ok — glb ${kb(`${OUT}/${b.glb}.glb`)}${b.matcap ? `, matcap ${kb(`${OUT}/${b.matcap}.ktx2`)}` : ""}`);
+  67  }
+  68  
+  69  // 4 · runtime decoders, served next to the assets
+  70  const LIBS = "node_modules/three/examples/jsm/libs";
+  71  for (const f of ["draco_decoder.js", "draco_decoder.wasm", "draco_wasm_wrapper.js"]) {
+  72    cpSync(`${LIBS}/draco/gltf/${f}`, `${OUT}/draco/${f}`);
+  73  }
+  74  for (const f of ["basis_transcoder.js", "basis_transcoder.wasm"]) {
+  75    cpSync(`${LIBS}/basis/${f}`, `${OUT}/basis/${f}`);
+  76  }
+
+
+File: assets-src/lab/gen_crystals.py
+SHA-256: 893830ea7c7725ec61b6fbbedf15a9f00c3d9ff4486f7b44aef2e8238601994c
+Lines 212–228
+
+ 212      ev = o.evaluated_get(dg)
+ 213      m = ev.to_mesh()
+ 214      m.calc_loop_triangles()
+ 215      print(f"[gen_crystals] {o.name}: {len(m.loop_triangles)} tris")
+ 216      ev.to_mesh_clear()
+ 217  
+ 218  bpy.ops.export_scene.gltf(
+ 219      filepath=f"{out_dir}/lab-crystals-raw.glb",
+ 220      export_format="GLB",
+ 221      export_apply=True,   # bake all bevel modifiers
+ 222      export_yup=True,
+ 223  )
+ 224  print(f"[gen_crystals] wrote {out_dir}/lab-crystals-raw.glb")
+ 225  
+ 226  
+ 227  # ------------------------------------------------------------------
+ 228  # matcap bakes — orthographic camera on a unit sphere, Cycles. The

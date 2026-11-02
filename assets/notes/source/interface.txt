@@ -1,0 +1,196 @@
+stackwith.me — interface reference excerpts
+Source snapshot: 2026-10-28
+
+These are excerpts from the local source used to prepare this edition.
+They describe code, not a successful browser test or the state of a live service.
+Line numbers refer to the original file. Full-file SHA-256 identifies that version.
+
+
+File: src/axon.html
+SHA-256: 0829df757be721580cf18db97c548dfec45a5383d2d042e062142aac9a4c437e
+Lines 1–99
+
+   1  ---
+   2  layout: layouts/home.njk
+   3  title: "AXON — autonomous-agent interface design showcase"
+   4  description: "AXON is Joel Ryan's interactive product-design study for inspectable automation. The interface and simulated traces are live; no autonomous-agent service is offered."
+   5  ogTitle: "AXON — an inspectable automation interface study"
+   6  permalink: "axon.html"
+   7  ---
+   8  
+   9      <!-- ░░ SIG.00 · HERO — THE OSCILLOSCOPE ░░ -->
+  10      <section class="hero" id="hero" data-sec="hero">
+  11        <div class="scan" aria-hidden="true"></div>
+  12        <div class="hero__grid" aria-hidden="true"></div>
+  13        <div class="hero__inner">
+  14          <p class="eyebrow" data-reveal>[ <span class="eyebrow__blip"></span> AUTONOMOUS-AGENT INTERFACE STUDY · SIMULATED ]</p>
+  15          <h1 class="hero__title" data-decode data-weight>
+  16            The nervous system<br>for your software.
+  17          </h1>
+  18          <p class="hero__sub" data-reveal>
+  19            AXON explores how an automation product could present sensing, planning,
+  20            guarded action, and a full reasoning trace. This is a design showcase, not a live agent service.
+  21          </p>
+  22          <div class="hero__actions" data-reveal>
+  23            <a href="#engage" class="btn btn--signal" data-magnet data-probe="DEPLOY">Deploy an agent</a>
+  24            <a href="#pipeline" class="btn btn--ghost" data-magnet data-probe="TRACE">See the signal path</a>
+  25          </div>
+  26          <dl class="hero__readout" data-reveal>
+  27            <div><dt>STATUS</dt><dd class="sig">CONCEPT</dd></div>
+  28            <div><dt>TRACE</dt><dd class="sig">SIMULATED</dd></div>
+  29            <div><dt>INTERFACE</dt><dd class="sig">LIVE</dd></div>
+  30          </dl>
+  31        </div>
+  32        <a href="#datasheet" class="hero__scroll" data-probe>SCROLL ▾ RIDE THE IMPULSE</a>
+  33      </section>
+  34  
+  35      <!-- ░░ CLIENTS — velocity marquee ░░ -->
+  36      <section class="clients" aria-label="AXON showcase disclosure">
+  37        <span class="clients__tag">[ WHAT IS REAL ]</span>
+  38        <div class="marquee"><div class="marquee__track" id="marquee">
+  39          <span>INTERFACE</span><i aria-hidden="true">/</i>
+  40          <span>ANIMATION</span><i aria-hidden="true">/</i>
+  41          <span>CHECKOUT</span><i aria-hidden="true">/</i>
+  42          <span>FIELD&nbsp;NOTES</span><i aria-hidden="true">/</i>
+  43          <span>SIMULATED&nbsp;TRACE</span><i aria-hidden="true">/</i>
+  44          <span>DESIGN&nbsp;TARGETS</span><i aria-hidden="true">/</i>
+  45        </div></div>
+  46      </section>
+  47  
+  48      <!-- ░░ SIG.01 · DATASHEET (features) ░░ -->
+  49      <section class="section datasheet" id="datasheet" data-sec="datasheet">
+  50        <div class="section__head">
+  51          <p class="eyebrow" data-reveal>[ SIG.01 · SPEC ]</p>
+  52          <h2 class="section__title" data-lines data-weight>Read it like a datasheet. Ship it like a nerve.</h2>
+  53          <p class="section__lead" data-reveal>Every capability, specified to tolerance. No hand-waving, no magic — an instrument you can audit line by line.</p>
+  54        </div>
+  55  
+  56        <div class="sheet" role="table" aria-label="Platform specification">
+  57          <div class="sheet__head" role="row">
+  58            <span role="columnheader">PARAMETER</span>
+  59            <span role="columnheader">SPECIFICATION</span>
+  60            <span role="columnheader">STATUS</span>
+  61          </div>
+  62          <div class="sheet__row" role="row" data-row>
+  63            <span class="sheet__k" role="cell"><b>Reasoning&nbsp;core</b></span>
+  64            <span class="sheet__v" role="cell">Closed-loop planner — decompose, simulate, self-correct. A mind, not a prompt.</span>
+  65            <span class="sheet__s" role="cell"><em class="pill pill--on">FIRING</em></span>
+  66          </div>
+  67          <div class="sheet__row" role="row" data-row>
+  68            <span class="sheet__k" role="cell"><b>Connectors</b></span>
+  69            <span class="sheet__v" role="cell">The interface models a connector catalog; no production connector library is delivered by this showcase.</span>
+  70            <span class="sheet__s" role="cell"><em class="pill pill--on">CONCEPT</em></span>
+  71          </div>
+  72          <div class="sheet__row" role="row" data-row>
+  73            <span class="sheet__k" role="cell"><b>Orchestration</b></span>
+  74            <span class="sheet__v" role="cell">A visual model for routing, retries, and hand-offs. The latency language is a design target, not a measured service result.</span>
+  75            <span class="sheet__s" role="cell"><em class="pill pill--on">TARGET</em></span>
+  76          </div>
+  77          <div class="sheet__row" role="row" data-row>
+  78            <span class="sheet__k" role="cell"><b>Guardrails</b></span>
+  79            <span class="sheet__v" role="cell">Scoped permissions, human approval gates, immutable audit trail on every action.</span>
+  80            <span class="sheet__s" role="cell"><em class="pill pill--on">ENFORCED</em></span>
+  81          </div>
+  82          <div class="sheet__row" role="row" data-row>
+  83            <span class="sheet__k" role="cell"><b>Memory</b></span>
+  84            <span class="sheet__v" role="cell">Persistent, vectorized context that compounds over every run the agent makes.</span>
+  85            <span class="sheet__s" role="cell"><em class="pill pill--on">PERSISTENT</em></span>
+  86          </div>
+  87          <div class="sheet__row" role="row" data-row>
+  88            <span class="sheet__k" role="cell"><b>Observability</b></span>
+  89            <span class="sheet__v" role="cell">Full reasoning trace per run — inputs, plan, tool calls, outcome, cost.</span>
+  90            <span class="sheet__s" role="cell"><em class="pill pill--on">TRACED</em></span>
+  91          </div>
+  92        </div>
+  93      </section>
+  94  
+  95      <!-- ░░ SIG.02 · PIPELINE (pinned horizontal) ░░ -->
+  96      <section class="pipeline" id="pipeline" data-sec="pipeline" aria-label="How it works">
+  97        <div class="pipeline__pin" id="pipePin">
+  98          <header class="pipeline__head">
+  99            <p class="eyebrow">[ SIG.02 · PROC ]</p>
+
+
+File: src/axon.html
+SHA-256: 0829df757be721580cf18db97c548dfec45a5383d2d042e062142aac9a4c437e
+Lines 180–258
+
+ 180        </div>
+ 181        <div class="readout" data-reveal>
+ 182          <span class="readout__num sig" data-count="0">0</span>
+ 183          <span class="readout__label">[ LIVE AGENT CLAIMS ]</span>
+ 184        </div>
+ 185      </section>
+ 186  
+ 187      <!-- ░░ SIG.05 · TRACE (reasoning console) ░░ -->
+ 188      <section class="section trace" id="trace" data-sec="trace">
+ 189        <div class="trace__copy">
+ 190          <p class="eyebrow" data-reveal>[ SIG.05 · TRACE ]</p>
+ 191          <h2 class="section__title" data-lines data-weight>Watch it think.</h2>
+ 192          <p class="section__lead" data-reveal>A real trace shape — sense, plan, act, observe — streamed as the agent works a live goal. Nothing hidden.</p>
+ 193        </div>
+ 194        <div class="console" data-reveal>
+ 195          <div class="console__bar">
+ 196            <span class="console__id">axon</span>
+ 197            <span class="console__run">run&nbsp;#4192</span>
+ 198            <span class="console__live"><i></i> LIVE</span>
+ 199          </div>
+ 200          <pre class="console__body" id="term" aria-hidden="true"></pre>
+ 201        </div>
+ 202      </section>
+ 203  
+ 204      <!-- ░░ SIG.06 · VOICES ░░ -->
+ 205      <section class="section voices" id="voices" data-sec="voices">
+ 206        <p class="eyebrow" data-reveal>[ SIG.06 · DISCLOSURE ]</p>
+ 207        <blockquote data-lines>
+ 208          <p>A convincing interface is not evidence of a deployed service. AXON is published as a transparent design study so the interaction model can be evaluated without pretending the underlying product exists.</p>
+ 209        </blockquote>
+ 210        <footer class="voices__by" data-reveal>
+ 211          <span class="voices__name">Joel Ryan</span>
+ 212          <span class="voices__role">Builder · stackwith.me</span>
+ 213        </footer>
+ 214      </section>
+ 215  
+ 216      <!-- ░░ SIG.07 · THE WRITE-UP ░░ -->
+ 217      <section class="section plans" id="study" data-sec="study">
+ 218        <div class="section__head">
+ 219          <p class="eyebrow" data-reveal>[ SIG.07 · THE WRITE-UP ]</p>
+ 220          <h2 class="section__title" data-lines data-weight>Everything behind this study is written down.</h2>
+ 221          <p class="section__lead" data-reveal>AXON is a design exploration, so the reasoning matters more than the artefact. These are the notes that came out of building it — how the interface was argued into shape, why the guardrail is the centrepiece, and what the latency budget did to the design. All public, no account, no paywall.</p>
+ 222        </div>
+ 223        <div class="tiers">
+ 224          <article class="tier" data-reveal data-magnet>
+ 225            <header><h3>The design problem</h3><span class="tier__tag">[ 00 ]</span></header>
+ 226            <p class="tier__desc">Why a chat box is the wrong shape for an agent that holds real authority, and what an operator needs to see instead.</p>
+ 227            <ul>
+ 228              <li>Sense, plan, act, audit as a visible spine</li>
+ 229              <li>Labelling illustrative elements honestly</li>
+ 230              <li>What got cut and why</li>
+ 231            </ul>
+ 232            <a class="btn btn--ghost" href="/blog/building-honest-product-interface-study.html" data-probe>Read the note</a>
+ 233          </article>
+ 234          <article class="tier tier--featured" data-reveal data-magnet>
+ 235            <span class="tier__badge">THE CENTREPIECE</span>
+ 236            <header><h3>Guardrails and audit</h3><span class="tier__tag">[ 01 ]</span></header>
+ 237            <p class="tier__desc">The moment an agent declines is more informative than the moment it succeeds. Designing for refusal, and for the trace you hand to somebody else.</p>
+ 238            <ul>
+ 239              <li>Guardrails as a feature, not compliance</li>
+ 240              <li>Why automation needs an audit trail</li>
+ 241              <li>Making refusal legible</li>
+ 242            </ul>
+ 243            <a class="btn btn--signal" href="/blog/guardrails-are-a-feature.html" data-probe="READ">Read the note</a>
+ 244          </article>
+ 245          <article class="tier" data-reveal data-magnet>
+ 246            <header><h3>The latency budget</h3><span class="tier__tag">[ 02 ]</span></header>
+ 247            <p class="tier__desc">What a sub-40ms orchestration target does to an interface, and where the time actually goes once you measure it.</p>
+ 248            <ul>
+ 249              <li>Measuring before optimising</li>
+ 250              <li>Where the budget gets spent</li>
+ 251              <li>Design consequences of the number</li>
+ 252            </ul>
+ 253            <a class="btn btn--ghost" href="/blog/engineering-sub-40ms-orchestration.html" data-probe>Read the note</a>
+ 254          </article>
+ 255        </div>
+ 256      </section>
+ 257  
+ 258      <!-- ░░ SIG.08 · ENGAGE (final CTA) ░░ -->

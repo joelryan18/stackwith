@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — Signal lost · stackwith.me</title>
+  <meta name="description" content="This page doesn't exist. The signal flatlined — let's route you back to a live wire." />
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#07080A" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307080A'/%3E%3Cpath d='M4 16h6l3-8 6 16 3-8h6' fill='none' stroke='%23B8FF3C' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <style>
+    @font-face { font-family: "Inter"; src: url("/assets/fonts/Inter-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "Clash Display"; src: url("/assets/fonts/ClashDisplay-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+    @font-face { font-family: "JetBrains Mono"; src: url("/assets/fonts/JetBrainsMono-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+    :root { --bg:#07080A; --text:#F2F4F3; --muted:#7E8794; --signal:#B8FF3C; --signal-ink:#0A0E04; --line:rgba(255,255,255,.14); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
+    a { color: inherit; }
+    .nav { display:flex; align-items:center; justify-content:space-between; padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--line); }
+    .nav__brand { display:flex; align-items:center; gap:.6rem; text-decoration:none; font-family:"Clash Display", sans-serif; letter-spacing:.08em; }
+    .nav__mark svg { width:28px; height:28px; color: var(--signal); }
+    .lost { max-width: 40rem; margin: 12vh auto; padding: 0 1.4rem; text-align:center; }
+    .updated { font-family:"JetBrains Mono", monospace; font-size:.72rem; letter-spacing:.08em; color: var(--muted); }
+    .lost__code { font-family:"Clash Display", sans-serif; font-size: clamp(4rem, 18vw, 8rem); line-height: .9; color: var(--signal); }
+    .lost__flat { width: min(560px, 100%); height: 60px; margin: .5rem 0 1rem; }
+    .lost__flat path { fill:none; stroke: var(--signal); stroke-width: 2; }
+    h1 { font-family:"Clash Display", sans-serif; font-weight:600; font-size: clamp(2rem, 5vw, 3rem); margin: .2rem 0 .6rem; }
+    .lost p { color: var(--muted); line-height: 1.55; }
+    .btn { display:inline-block; padding:.75rem 1.1rem; border-radius:4px; text-decoration:none; font-family:"JetBrains Mono", monospace; font-size:.78rem; letter-spacing:.04em; }
+    .btn--signal { background: var(--signal); color: var(--signal-ink); }
+    .btn--ghost { border: 1px solid var(--line); }
+  </style>
+</head>
+<body class="no3d page">
+  <header class="nav is-scrolled">
+    <a href="/" class="nav__brand" aria-label="stackwith.me home">
+      <span class="nav__mark" aria-hidden="true">
+        <svg viewBox="0 0 28 28"><path d="M2 14h5l3-7 6 14 3-7h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      </span>
+      <span class="nav__word">STACKWITH.ME</span>
+    </a>
+    <div class="nav__right">
+      <a href="/" class="btn btn--ghost">← Back home</a>
+    </div>
+  </header>
+
+  <main class="lost">
+    <p class="updated">[ ERR.404 · NO PULSE DETECTED ON THIS ROUTE ]</p>
+    <div class="lost__code" aria-hidden="true">404</div>
+    <svg class="lost__flat" viewBox="0 0 560 60" preserveAspectRatio="none" aria-hidden="true">
+      <path id="flatline" d="M0,30 L220,30 L240,8 L252,52 L264,30 L560,30" />
+    </svg>
+    <h1>Signal lost.</h1>
+    <p>The page you probed doesn't exist — moved, renamed, or never wired in. The rest of the workshop is fully operational.</p>
+    <div style="display:flex; gap:.8rem; flex-wrap:wrap; justify-content:center;">
+      <a href="/" class="btn btn--signal">Return home</a>
+      <a href="/blog/" class="btn btn--ghost">Read field notes</a>
+      <a href="/contact.html" class="btn btn--ghost">Contact Joel</a>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      var path = document.getElementById("flatline"), x = 220;
+      setInterval(function () {
+        x = 60 + Math.random() * 420;
+        path.setAttribute("d", "M0,30 L" + (x - 20) + ",30 L" + x + ",8 L" + (x + 12) + ",52 L" + (x + 24) + ",30 L560,30");
+      }, 2200);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+stackwith.me — quality reference excerpts
+Source snapshot: 2026-10-28
+
+These are excerpts from the local source used to prepare this edition.
+They describe code, not a successful browser test or the state of a live service.
+Line numbers refer to the original file. Full-file SHA-256 identifies that version.
+
+
+File: src/assets/js/lab3d.js
+SHA-256: 3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca
+Lines 438–449
+
+ 438  
+ 439  async function start() {
+ 440    const PHONE = innerWidth < 680;
+ 441    const MID = PHONE || innerWidth < 1100 || matchMedia("(pointer: coarse)").matches;
+ 442    const QCAPS = PHONE ? [1.1, 1, .85] : MID ? [1.25, 1, .9] : [1.5, 1.15, 1];
+ 443    let W = innerWidth, H = innerHeight, dprNow = Math.min(devicePixelRatio || 1, QCAPS[0]);
+ 444    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, stencil: false, powerPreference: "high-performance" });
+ 445    const events = new AbortController();
+ 446    const listen = (target, name, fn, options = {}) => target.addEventListener(name, fn, { ...options, signal: events.signal });
+ 447    let composer, atmosphere, landscape, exhibits, environment, iceEnvironment, disposed = false;
+ 448    const loadedAssets = [];
+ 449    const manager = new THREE.LoadingManager();
+
+
+File: src/assets/js/lab3d.js
+SHA-256: 3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca
+Lines 648–693
+
+ 648    let hidden = document.hidden, qIdx = 0, emaMs = 16.7, qCooldown = 120;
+ 649    let lastFrameStamp = performance.now() / 1000;
+ 650    const sample = { position: new THREE.Vector3(), target: new THREE.Vector3(), fov: 45 };
+ 651    sampleLabJourney(0, W / H, sample);
+ 652    const currentPosition = sample.position.clone(), currentTarget = sample.target.clone();
+ 653    listen(document, "visibilitychange", () => { hidden = document.hidden; if (hidden) chargeRelease(true); requestFrame(); });
+ 654    listen(window, "resize", () => {
+ 655      W = innerWidth; H = innerHeight; camera.aspect = W / H; camera.updateProjectionMatrix();
+ 656      setSize(dprNow); requestFrame();
+ 657    });
+ 658    listen(canvas, "webglcontextlost", event => { event.preventDefault(); no3d("The 3D connection was interrupted. The still edition is ready below."); });
+ 659    listen(window, "pagehide", event => {
+ 660      mem.lastISO = new Date().toISOString(); memSave();
+ 661      if (!event.persisted) disposeWorld?.();
+ 662    });
+ 663  
+ 664    window.__labQ = () => ({
+ 665      rendered: live, frames, paused: motionPaused, time: +labT.toFixed(3), chapter: activeCh,
+ 666      progress: +progress().toFixed(3), sceneProgress: +sceneProgress.toFixed(3), cameraSettled,
+ 667      qIdx, dpr: dprNow, disp: 0, rip: ripCount, echo: echoCount, stoneRip: stoneRipCount, chime: chimeCount,
+ 668      charge: +charge.toFixed(3), charges: mem.charges, chargeArmed, pocket: PHONE, ruin: 2,
+ 669      keystone: exhibits.diagnostics().keystone, visits: mem.visits, memoryPersists: memPersists,
+ 670      tx: txEl?.textContent, bootLines, emaMs: Math.round(emaMs), camera: camera.position.toArray(),
+ 671      drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+ 672      landscape: landscape.diagnostics(), exhibits: exhibits.diagnostics(), journey: "frozen-exhibits",
+ 673      atmosphere: atmosphere ? { enabled: atmosphere.enabled, steps: atmosphere.fog.defines.AIR_STEPS } : null,
+ 674      arrivalTime: +arrivalTime.toFixed(3), entranceReady,
+ 675    });
+ 676    renderer.setAnimationLoop(stamp => {
+ 677      const now = stamp / 1000, elapsed = Math.max(0, now - lastFrameStamp);
+ 678      if (hidden || disposed || bootCancelled || (motionPaused && !renderRequested)) { lastFrameStamp = now; return; }
+ 679      if (!renderRequested && elapsed < 1 / (PHONE ? 45 : 60)) return;
+ 680      lastFrameStamp = now; renderRequested = false;
+ 681      const dt = motionPaused ? 0 : Math.min(.05, elapsed);
+ 682      const cp = progress();
+ 683      if (!motionPaused) {
+ 684        labT += dt;
+ 685        emaMs += (Math.min(100, elapsed * 1000) - emaMs) * .05;
+ 686        if (--qCooldown <= 0) {
+ 687          let next = qIdx;
+ 688          if (emaMs > 30) next = Math.min(QCAPS.length - 1, qIdx + 1);
+ 689          else if (emaMs < 17) next = Math.max(0, qIdx - 1);
+ 690          if (next !== qIdx) { qIdx = next; dprNow = Math.min(devicePixelRatio || 1, QCAPS[qIdx]); setSize(dprNow); }
+ 691          qCooldown = 240;
+ 692        }
+ 693        for (let i = echoQueue.length - 1; i >= 0; i--) {

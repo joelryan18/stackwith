@@ -1,0 +1,216 @@
+stackwith.me — audio reference excerpts
+Source snapshot: 2026-10-28
+
+These are excerpts from the local source used to prepare this edition.
+They describe code, not a successful browser test or the state of a live service.
+Line numbers refer to the original file. Full-file SHA-256 identifies that version.
+
+
+File: src/assets/js/lab3d.js
+SHA-256: 3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca
+Lines 253–336
+
+ 253     drone bed whose filter DARKENS WITH DEPTH, air shimmer, a
+ 254     noise whoosh on chapter hand-offs. Default OFF; stored "on"
+ 255     only arms until the first gesture (autoplay policy).
+ 256     ------------------------------------------------------------ */
+ 257  const soundBtn = document.getElementById("labSound");
+ 258  let bedFilterRef = null, acRef = null, chimeRef = null, chimeCount = 0, thumpRef = null;
+ 259  if (soundBtn) {
+ 260    let AC = null, master = null, soundOn = false;
+ 261    const ensureAudio = () => {
+ 262      if (AC) return true;
+ 263      try {
+ 264        AC = new (window.AudioContext || window.webkitAudioContext)();
+ 265        acRef = AC;
+ 266        master = AC.createGain();
+ 267        master.gain.value = 0;
+ 268        master.connect(AC.destination);
+ 269        const bed = AC.createBiquadFilter();
+ 270        bed.type = "lowpass"; bed.frequency.value = 220; bed.Q.value = 0.7;
+ 271        bed.connect(master);
+ 272        bedFilterRef = bed;
+ 273        [[48, "sine", 0.17], [96.5, "sine", 0.10], [144.8, "triangle", 0.03]].forEach(([f, ty, g]) => {
+ 274          const o = AC.createOscillator(), og = AC.createGain();
+ 275          o.type = ty; o.frequency.value = f; og.gain.value = g;
+ 276          o.connect(og); og.connect(bed); o.start();
+ 277        });
+ 278        const lfo = AC.createOscillator(), lg = AC.createGain();
+ 279        lfo.frequency.value = 0.05; lg.gain.value = 70;
+ 280        lfo.connect(lg); lg.connect(bed.frequency); lfo.start();
+ 281        const len = AC.sampleRate * 2;
+ 282        const buf = AC.createBuffer(1, len, AC.sampleRate);
+ 283        const d = buf.getChannelData(0);
+ 284        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+ 285        const noise = AC.createBufferSource();
+ 286        noise.buffer = buf; noise.loop = true;
+ 287        const bp = AC.createBiquadFilter();
+ 288        bp.type = "bandpass"; bp.frequency.value = 1600; bp.Q.value = 1.6;
+ 289        const ng = AC.createGain(); ng.gain.value = 0.011;
+ 290        noise.connect(bp); bp.connect(ng); ng.connect(master); noise.start();
+ 291        return true;
+ 292      } catch { AC = null; return false; }
+ 293    };
+ 294    /* v4 RESONANCE chime — struck crystals ring pitched. Pentatonic
+ 295       minor over the 48Hz drone root so any strike cluster stays
+ 296       consonant with the bed; azimuth picks the degree, depth drops
+ 297       the octave (the shaft gets graver as you descend), strike x
+ 298       pans the voice. Gated by soundOn; ≤6 live voices, ≥110ms apart. */
+ 299    let lastChime = 0, chimeVoices = 0;
+ 300    chimeRef = (hx, hy, hz, octDrop = 0) => {
+ 301      if (!AC || !soundOn || chimeVoices >= 6) return;
+ 302      const now = AC.currentTime;
+ 303      if (now - lastChime < 0.11) return;
+ 304      lastChime = now;
+ 305      const PENTA = [0, 3, 5, 7, 10];
+ 306      const deg = PENTA[Math.abs(Math.floor(((Math.atan2(hz, hx) + Math.PI) / (Math.PI * 2)) * 5)) % 5];
+ 307      const oct = Math.max(0, (hy > -12 ? 3 : hy > -30 ? 2 : 1) - octDrop); // oct 0 = the 48Hz drone root itself
+ 308      const f0 = 48 * Math.pow(2, oct + deg / 12);
+ 309      const g = AC.createGain();
+ 310      g.gain.setValueAtTime(0, now);
+ 311      g.gain.linearRampToValueAtTime(0.055, now + 0.012);
+ 312      g.gain.exponentialRampToValueAtTime(0.0004, now + 0.95);
+ 313      const lp = AC.createBiquadFilter();
+ 314      lp.type = "lowpass"; lp.frequency.value = 2600; lp.Q.value = 0.9;
+ 315      g.connect(lp);
+ 316      let tail = lp;
+ 317      if (AC.createStereoPanner) {
+ 318        const pan = AC.createStereoPanner();
+ 319        pan.pan.value = Math.max(-0.8, Math.min(0.8, hx / 9));
+ 320        lp.connect(pan); tail = pan;
+ 321      }
+ 322      tail.connect(master);
+ 323      /* fundamental + a barely-detuned 3rd partial = glassy ring */
+ 324      [[f0, 1], [f0 * 2.997, 0.22]].forEach(([f, k], vi) => {
+ 325        const o = AC.createOscillator(), og = AC.createGain();
+ 326        o.type = "sine"; o.frequency.value = f; og.gain.value = k;
+ 327        o.connect(og); og.connect(g);
+ 328        if (vi === 0) o.onended = () => { try { tail.disconnect(); } catch {} }; // free the dead subgraph
+ 329        o.start(now); o.stop(now + 1.0);
+ 330      });
+ 331      chimeVoices++; chimeCount++;
+ 332      setTimeout(() => { chimeVoices--; }, 1000);
+ 333    };
+ 334    /* v4 CHARGE release thump — sub-bass drop (46→30Hz) + a short
+ 335       filtered noise crack, both scaled by how charged the core was. */
+ 336    thumpRef = (k) => {
+
+
+File: src/assets/js/lab3d.js
+SHA-256: 3f225103d28459067f921c36e607e732912eed57e3c6bb652118a60dfa4433ca
+Lines 375–421
+
+ 375      src.start();
+ 376    };
+ 377    const setOn = (v, persist = true) => {
+ 378      if (v && !ensureAudio()) {
+ 379        soundBtn.querySelector("[data-sound-label]").textContent = "Sound unavailable";
+ 380        soundBtn.disabled = true;
+ 381        return;
+ 382      }
+ 383      soundOn = v;
+ 384      soundBtn.querySelector("[data-sound-label]").textContent = v ? "Sound on" : "Sound off";
+ 385      if (v && AC?.state === "suspended") AC.resume().catch(() => {});
+ 386      soundBtn.setAttribute("aria-pressed", String(!!v));
+ 387      soundBtn.classList.toggle("is-on", v);
+ 388      if (persist) { try { localStorage.setItem("lab-sound", v ? "1" : "0"); } catch {} }
+ 389      if (master) master.gain.linearRampToValueAtTime(v ? 0.9 : 0, (AC?.currentTime || 0) + 0.7);
+ 390    };
+ 391    soundBtn.addEventListener("click", () => setOn(!soundOn));
+ 392    let pref = null;
+ 393    try { pref = localStorage.getItem("lab-sound"); } catch {}
+ 394    if (pref === "1") {
+ 395      soundBtn.classList.add("is-armed");
+ 396      addEventListener("pointerdown", function arm() {
+ 397        removeEventListener("pointerdown", arm);
+ 398        soundBtn.classList.remove("is-armed");
+ 399        setOn(true, false);
+ 400      }, { once: true });
+ 401    }
+ 402    addEventListener("lab:chapter", whoosh);
+ 403    const syncAudio = () => {
+ 404      if (!AC) return;
+ 405      if (document.hidden || motionPaused || !live) AC.suspend().catch(() => {});
+ 406      else if (soundOn) AC.resume().catch(() => {});
+ 407    };
+ 408    addEventListener("lab:motion", syncAudio);
+ 409    document.addEventListener("visibilitychange", syncAudio);
+ 410    addEventListener("pagehide", (e) => { if (!e.persisted) AC?.close().catch(() => {}); });
+ 411  }
+ 412  
+ 413  /* ------------------------------------------------------------
+ 414     WebGL world
+ 415     ------------------------------------------------------------ */
+ 416  const canvas = document.getElementById("labfx");
+ 417  const no3d = (reason = "The landscape could not load. You can still read all five chapters.") => {
+ 418    bootCancelled = true; live = false; fallbackReason = reason;
+ 419    disposeWorld?.(); disposeWorld = null;
+ 420    lenis?.destroy(); lenis = null;
+ 421    document.body.classList.remove("lab-crystalline", "lab-pocket", "lab-ruin", "lab-transmission", "fx-on", "lab-type-on", "lab-exhibits");
+
+
+File: src/assets/js/game3d.js
+SHA-256: 166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868
+Lines 277–337
+
+ 277    if (AC) return;
+ 278    try {
+ 279      AC = new (window.AudioContext || window.webkitAudioContext)();
+ 280      master = AC.createGain();
+ 281      master.gain.value = sndOn ? 0.85 : 0;
+ 282      const comp = AC.createDynamicsCompressor();
+ 283      comp.threshold.value = -18; comp.ratio.value = 8;
+ 284      master.connect(comp); comp.connect(AC.destination);
+ 285      noiseBuf = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
+ 286      const d = noiseBuf.getChannelData(0);
+ 287      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+ 288    } catch (e) { AC = null; }
+ 289  }
+ 290  function setSnd(v) {
+ 291    sndOn = v;
+ 292    try { localStorage.setItem("game-sound", v ? "on" : "off"); } catch (e) { /* ignore */ }
+ 293    if (AC && master) master.gain.setTargetAtTime(v ? 0.85 : 0, AC.currentTime, 0.05);
+ 294    if (v && AC?.state === "suspended") AC.resume().catch(() => {});
+ 295  }
+ 296  /* one enveloped noise burst through a filter — the workhorse */
+ 297  function nBurst({ dur = 0.1, type = "highpass", freq = 900, q = 0.8, gain = 0.5, at = 0, pan = 0, rate = 1 }) {
+ 298    if (!AC || !sndOn) return;
+ 299    const t = AC.currentTime + at;
+ 300    const src = AC.createBufferSource(); src.buffer = noiseBuf; src.playbackRate.value = rate;
+ 301    const f = AC.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+ 302    const g = AC.createGain();
+ 303    g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+ 304    const p = AC.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan));
+ 305    src.connect(f); f.connect(g); g.connect(p); p.connect(master);
+ 306    src.start(t); src.stop(t + dur + 0.05);
+ 307    src.onended = () => { src.disconnect(); f.disconnect(); g.disconnect(); p.disconnect(); };
+ 308  }
+ 309  function tone({ freq = 440, freq2 = 0, dur = 0.15, type = "sine", gain = 0.2, at = 0, pan = 0 }) {
+ 310    if (!AC || !sndOn) return;
+ 311    const t = AC.currentTime + at;
+ 312    const o = AC.createOscillator(); o.type = type;
+ 313    o.frequency.setValueAtTime(freq, t);
+ 314    if (freq2) o.frequency.exponentialRampToValueAtTime(Math.max(20, freq2), t + dur);
+ 315    const g = AC.createGain();
+ 316    g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+ 317    const p = AC.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan));
+ 318    o.connect(g); g.connect(p); p.connect(master);
+ 319    o.start(t); o.stop(t + dur + 0.05);
+ 320    o.onended = () => { o.disconnect(); g.disconnect(); p.disconnect(); };
+ 321  }
+ 322  const sfxShot = (dmr) => {
+ 323    if (dmr) {
+ 324      nBurst({ dur: 0.16, freq: 700, gain: 0.62 });
+ 325      tone({ freq: 130, freq2: 46, dur: 0.16, type: "triangle", gain: 0.4 });
+ 326    } else {
+ 327      nBurst({ dur: 0.085, freq: 950, gain: 0.42 });
+ 328      tone({ freq: 185, freq2: 62, dur: 0.07, type: "square", gain: 0.16 });
+ 329    }
+ 330  };
+ 331  const sfxDistantShot = (dist, pan) => {
+ 332    const k = Math.max(0, 1 - dist / 160);
+ 333    if (k <= 0.02) return;
+ 334    nBurst({ dur: 0.12, type: "lowpass", freq: 500 + k * 900, gain: 0.16 * k, pan });
+ 335  };
+ 336  const sfxDink = () => { tone({ freq: 1245, dur: 0.1, gain: 0.3 }); tone({ freq: 1660, dur: 0.07, gain: 0.16 }); };
+ 337  const sfxHit = () => nBurst({ dur: 0.05, type: "bandpass", freq: 420, q: 2, gain: 0.24 });

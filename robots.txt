@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Checkout carries a noindex meta tag and is omitted from the sitemap.
+# Crawlers must be allowed to fetch it to see that instruction.
+
+Sitemap: https://stackwith.me/sitemap.xml

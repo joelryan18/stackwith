@@ -1,0 +1,179 @@
+stackwith.me — multiplayer reference excerpts
+Source snapshot: 2026-10-28
+
+These are excerpts from the local source used to prepare this edition.
+They describe code, not a successful browser test or the state of a live service.
+Line numbers refer to the original file. Full-file SHA-256 identifies that version.
+
+
+File: src/assets/js/game3d.js
+SHA-256: 166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868
+Lines 176–227
+
+ 176  function supaTransport(h) {
+ 177    let sb = null, ch = null;
+ 178    return {
+ 179      kind: "supa",
+ 180      join(code, meta) {
+ 181        const cfg = window.__gameNetCfg || {};   /* QA override hook (same pattern as __axonAuthCfg) */
+ 182        sb = createClient(cfg.url || SUPA_URL, cfg.key || SUPA_KEY, { realtime: { params: { eventsPerSecond: 32 } } });
+ 183        ch = sb.channel("strike-" + code, { config: { broadcast: { self: false, ack: false }, presence: { key: meta.id } } });
+ 184        ch.on("broadcast", { event: "g" }, (m) => h.onMsg(m.payload));
+ 185        ch.on("presence", { event: "sync" }, () => {
+ 186          const st = ch.presenceState(), peers = new Map();
+ 187          for (const k of Object.keys(st)) { if (k !== meta.id && st[k][0]) peers.set(k, st[k][0]); }
+ 188          h.onPeers(peers);
+ 189        });
+ 190        ch.subscribe((status) => {
+ 191          if (status === "SUBSCRIBED") { ch.track(meta).catch(() => {}); h.onState("on"); }
+ 192          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") h.onState("err");
+ 193        });
+ 194      },
+ 195      send(p) { try { ch?.send({ type: "broadcast", event: "g", payload: p }); } catch (e) { /* transient */ } },
+ 196      leave() { try { if (ch) sb.removeChannel(ch); } catch (e) { /* closing */ } ch = null; h.onState("off"); },
+ 197    };
+ 198  }
+ 199  
+ 200  function bcTransport(h) {
+ 201    let bc = null, me = null, timer = 0;
+ 202    const peers = new Map();                       /* id → {meta, seen} */
+ 203    const sync = () => { const out = new Map(); for (const [k, v] of peers) out.set(k, v.meta); h.onPeers(out); };
+ 204    return {
+ 205      kind: "bc",
+ 206      join(code, meta) {
+ 207        me = meta;
+ 208        bc = new BroadcastChannel("strike-" + code);
+ 209        bc.onmessage = (e) => {
+ 210          const m = e.data;
+ 211          if (m.hi) {
+ 212            const known = peers.has(m.hi.id);
+ 213            peers.set(m.hi.id, { meta: m.hi, seen: Date.now() });
+ 214            if (!known) { sync(); bc.postMessage({ hi: me, echo: 1 }); }
+ 215            return;
+ 216          }
+ 217          if (m.bye) { if (peers.delete(m.bye)) sync(); return; }
+ 218          if (m.g && m.from !== me.id) h.onMsg(m.g);
+ 219        };
+ 220        bc.postMessage({ hi: me });
+ 221        timer = setInterval(() => {
+ 222          bc.postMessage({ hi: me, echo: 1 });
+ 223          const now = Date.now(); let drop = false;
+ 224          for (const [k, v] of peers) if (now - v.seen > 7000) { peers.delete(k); drop = true; }
+ 225          if (drop) sync();
+ 226        }, 2000);
+ 227        h.onState("on");
+
+
+File: src/assets/js/game3d.js
+SHA-256: 166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868
+Lines 1555–1570
+
+1555    function recomputeHost() {
+1556      let best = { id: NET.id, joinT: NET.joinT };
+1557      for (const pr of NET.peers.values())
+1558        if (pr.joinT < best.joinT || (pr.joinT === best.joinT && pr.id < best.id)) best = pr;
+1559      const was = NET.hostId;
+1560      NET.hostId = best.id;
+1561      if (was && was !== NET.hostId && NET.hostId === NET.id && NET.started && M.on && !M.over) {
+1562        /* promoted mid-match: adopt the replicated bots + storm as sim state */
+1563        for (const b of aliveBots()) { b.state = "wander"; b.tState = 0.3; b.target = null; b.tHuman = null; b.vel.set(0, 0, 0); }
+1564        /* tdm: dead bots had host-side respawn clocks — start fresh ones */
+1565        if (M.mode === "tdm") for (const b of bots) if (!b.alive && !b.out && !(b.respawnT > 0)) b.respawnT = TDM.RESPAWN;
+1566        banner("SIGNAL AUTHORITY ASSUMED", "is-amber");
+1567      }
+1568    }
+1569  
+1570    function netState(s) {
+
+
+File: src/assets/js/game3d.js
+SHA-256: 166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868
+Lines 1680–1725
+
+1680    /* ---------- snapshots ---------- */
+1681    const r1 = (v) => Math.round(v * 10) / 10, r2 = (v) => Math.round(v * 100) / 100;
+1682    function txSnap() {
+1683      if (!NET.on || !NET.started || !M.on || M.over || !P.deployed) return;
+1684      netSend({ t: "s", id: NET.id, x: r1(P.pos.x), y: r1(P.pos.y), z: r1(P.pos.z), yw: r2(P.yaw), pt: r2(P.pitch),
+1685        hp: Math.round(P.hp), sh: Math.round(P.sh), al: P.alive ? 1 : 0,
+1686        gl: P.gliding ? 1 : 0, cr: P.crouch ? 1 : 0, w: P.wIdx });
+1687    }
+1688    function onSnap(m) {
+1689      if (![m.x, m.y, m.z, m.yw].every(Number.isFinite)) return;   /* malformed peer — never NaN the sim */
+1690      let pr = NET.peers.get(m.id);
+1691      if (!pr) {
+1692        if (NET.peers.size >= 16) return;                          /* flood guard */
+1693        pr = mkPeer(m.id, { name: "UNIT", joinT: Date.now() }); NET.peers.set(m.id, pr);
+1694      }
+1695      if (NET.started && !pr.inMatch) { pr.inMatch = true; pr.alive = !!m.al; peerRig(pr); }  /* snap-before-presence heal */
+1696      /* tdm: peers respawn themselves — their own snaps flip them back on */
+1697      if (M.mode === "tdm" && NET.started && pr.inMatch && !!m.al !== pr.alive) pr.alive = !!m.al;
+1698      pr.hp = m.hp; pr.sh = m.sh;
+1699      pr.gliding = !!m.gl; pr.crouch = !!m.cr; pr.wIdx = m.w || 0;
+1700      pr.pitch = Number.isFinite(m.pt) ? m.pt : 0;
+1701      if (pr.p1) pr.p0 = pr.p1;
+1702      pr.p1 = { rt: performance.now(), x: m.x, y: m.y, z: m.z, yw: m.yw };
+1703      if (!pr.p0) { pr.pos.set(m.x, m.y, m.z); pr.yaw = m.yw; }
+1704    }
+1705    const REND_LAG = 140;                        /* render replicas this far in the past */
+1706    function stepPeers(dt) {
+1707      const rNow = performance.now() - REND_LAG;
+1708      for (const pr of NET.peers.values()) {
+1709        if (!pr.rig) continue;
+1710        const a = pr.p0, b = pr.p1;
+1711        if (b) {
+1712          if (a && b.rt > a.rt) {
+1713            const span = (b.rt - a.rt) / 1000 || 0.1;
+1714            const k = Math.max(0, Math.min(1.3, (rNow - a.rt) / (b.rt - a.rt)));
+1715            pr.pos.set(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, a.z + (b.z - a.z) * k);
+1716            pr.vel.set((b.x - a.x) / span, (b.y - a.y) / span, (b.z - a.z) / span);
+1717            let dy = b.yw - a.yw;
+1718            while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
+1719            pr.yaw = a.yw + dy * Math.min(1, k);
+1720          } else { pr.pos.set(b.x, b.y, b.z); pr.yaw = b.yw; }
+1721        }
+1722        pr.rig.g.visible = NET.started && pr.inMatch && pr.alive && !!b;
+1723        pr.rig.g.position.copy(pr.pos);
+1724        pr.rig.g.rotation.y = pr.yaw;
+1725        pr.rig.g.rotation.x = pr.gliding ? 0.4 : 0;
+
+
+File: src/assets/js/game3d.js
+SHA-256: 166901ecb6eb98bdf83834294f2cd6cf63669ba8e42e3d1f6d45114dcccf8868
+Lines 1856–1890
+
+1856  
+1857    /* ---------- inbound dispatch ---------- */
+1858    /* wire numbers are peer-controlled: clamp so a buggy (or hostile)
+1859       client can never NaN-poison hp/sh — the trust model between
+1860       friends stays, sim integrity doesn't ride on it */
+1861    const saneDmg = (v) => Math.min(220, Math.max(0, Number.isFinite(+v) ? +v : 0));
+1862    function netMsg(m) {
+1863      if (!m || !m.t) return;
+1864      switch (m.t) {
+1865        case "s": onSnap(m); break;
+1866        case "go": onGo(m); break;
+1867        case "st": if (!iAmHost() && M.mode !== "tdm") onStorm(m); break;
+1868        case "bs": if (!iAmHost()) onBotSnap(m); break;
+1869        case "sc": {
+1870          if (M.mode !== "tdm" || iAmHost()) break;
+1871          const si = (v) => Math.min(999, Math.max(0, Math.round(+v) || 0));
+1872          M.score[0] = si(m.a); M.score[1] = si(m.b);
+1873          if (Number.isFinite(+m.mt)) M.t = +m.mt;
+1874          if (m.fin) endMatch(false);              /* tdm branch reads the score itself */
+1875          break;
+1876        }
+1877        case "pkr": { const p = pickups[m.i]; if (p && !p.live) { p.live = true; p.m.visible = true; p.rt = 0; } break; }
+1878        case "hit": {
+1879          const d = saneDmg(m.dmg);
+1880          if (d && m.tgt === NET.id && NET.started) hurtPlayer(d, feedName(m.by), m.bid || null, m.bid ? NET.peers.get(m.bid)?.pos : null);
+1881          break;
+1882        }
+1883        case "hitb": {
+1884          const d = saneDmg(m.dmg);
+1885          if (d && iAmHost()) { const b = bots[m.i]; if (b?.alive) hurtBot(b, d, m.crit, null, false, feedName(m.by), m.fid); }
+1886          break;
+1887        }
+1888        case "bkill": onBotKillMsg(m); break;
+1889        case "died": onPeerDied(m); break;
+1890        case "shot": {

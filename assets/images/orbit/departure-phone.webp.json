@@ -1,0 +1,23 @@
+{
+  "origin": "Rendered from the original Orbit Three.js world, with UI text excluded.",
+  "method": "__orbitCapture",
+  "progress": 0,
+  "width": 780,
+  "height": 1780,
+  "time": 8,
+  "sourceHashes": {
+    "src/orbit.html": "2f0ebbd298692cdc9391e8bed4af927ddb59ee08bfa35be5af13e95b0468cd68",
+    "src/_includes/layouts/orbit.njk": "17e4d30bdab3c9ab40f5f417485bb82b4d7ca7dfb0cbbf8b8d41fed6b25334ba",
+    "src/assets/css/orbit.css": "bcc6389365c3969f84aad0461e5c6c2e27e4d814a834db8737c71fd78e59a2dd",
+    "src/assets/js/orbit-astronaut.js": "f2485bdff202242d71a6741013dfd1a317348b80d1cfe87cc4cc1cba614786b0",
+    "src/assets/js/orbit-basin.js": "6469eb98201109a02889bda109835c51b07d20b440cd104ee7fc499ef3d437f1",
+    "src/assets/js/orbit-gateway.js": "8e704bc84e8fe3c357c57810bd764e954600321d5ee1f8ae4483e119f40a806e",
+    "src/assets/js/orbit-geometry.js": "d2ddbeedc9bf25d18fa3469463a248264b32a9349c43b84100728c7d4a410c11",
+    "src/assets/js/orbit-materials.js": "3d41d0be309ba7db86c545e9f70b91755f5a21fbf2c7ed1d82d02ba491e234ee",
+    "src/assets/js/orbit-world.js": "745b6b82677b3a17fb9e4b4ac4206fbb3feacb8045d10cff0dc256945681c5df",
+    "src/assets/js/orbit.js": "0827fa7eb7ce7c89c848c1ae8e5744013a19b004b8a29257a8cc7f0aa9a479d1",
+    "src/assets/js/orbit3d.js": "032a3f80802514a10d9c079df5149f18e05d9586f50aaf05f8043512948c4e36"
+  },
+  "credits": "Astronaut by Poly, CC BY 2.0; Earth layers distributed with Three.js r160, MIT. Original scene, lighting, pose and equipment for stackwith.me.",
+  "created": "2026-10-09T11:13:35.512Z"
+}

@@ -1,0 +1,197 @@
+stackwith.me — testing reference excerpts
+Source snapshot: 2026-10-28
+
+These excerpts describe code and workflow configuration, not a successful CI or browser run.
+Line numbers refer to the original file; each hash identifies the complete source version.
+
+
+File: package.json
+SHA-256: 98acc6c48b0f621a694c096e006a0d155c6289c1a5245f7edd23b77516537679
+Lines 1–23
+
+   1  {
+   2    "name": "axon-site",
+   3    "private": true,
+   4    "type": "module",
+   5    "engines": {
+   6      "node": ">=20"
+   7    },
+   8    "scripts": {
+   9      "build": "node scripts/build-assets.mjs && eleventy",
+  10      "dev": "node scripts/build-assets.mjs && eleventy --serve",
+  11      "watch:assets": "node scripts/build-assets.mjs --watch",
+  12      "smoke": "node scripts/smoke.mjs",
+  13      "qa": "node scripts/qa-shots.mjs",
+  14      "preview:editorial": "node scripts/build-editorial-preview.mjs",
+  15      "check:editorial": "node scripts/check-editorial.mjs"
+  16    },
+  17    "dependencies": {
+  18      "@dimforge/rapier3d-compat": "^0.19.3",
+  19      "@studio-freight/lenis": "1.0.42",
+  20      "@supabase/supabase-js": "2.110.0",
+  21      "gsap": "3.12.5",
+  22      "n8ao": "^2.0.0",
+  23      "postprocessing": "^6.35.0",
+
+
+File: .github/workflows/deploy.yml
+SHA-256: b0467bc5ebab59eccebb0e0e3e06ede2d03fafb1f30165d055619277851360da
+Lines 1–41
+
+   1  name: Deploy site
+   2  
+   3  on:
+   4    push:
+   5      branches: [main]
+   6    workflow_dispatch:
+   7  
+   8  permissions:
+   9    contents: read
+  10    pages: write
+  11    id-token: write
+  12  
+  13  concurrency:
+  14    group: pages
+  15    cancel-in-progress: true
+  16  
+  17  jobs:
+  18    build:
+  19      runs-on: ubuntu-latest
+  20      steps:
+  21        - uses: actions/checkout@v4
+  22        - uses: actions/setup-node@v4
+  23          with:
+  24            node-version: 20
+  25            cache: npm
+  26        - run: npm ci
+  27        - run: npm run build
+  28        - run: npm run check:editorial
+  29        - uses: actions/upload-pages-artifact@v3
+  30          with:
+  31            path: _site
+  32  
+  33    deploy:
+  34      needs: build
+  35      runs-on: ubuntu-latest
+  36      environment:
+  37        name: github-pages
+  38        url: ${{ steps.deployment.outputs.page_url }}
+  39      steps:
+  40        - id: deployment
+  41          uses: actions/deploy-pages@v4
+
+
+File: scripts/smoke.mjs
+SHA-256: bd5f0c58142e4a9bd34fc3920ab0221bc3b23af7ed05747df3e5093e58c95721
+Lines 1–110
+
+   1  // Smoke tests: serve _site, drive headless Chrome over CDP, assert behavior.
+   2  // Usage: node scripts/smoke.mjs   (exits 1 on any failure)
+   3  import { spawn } from "node:child_process";
+   4  import { createServer } from "node:http";
+   5  import { readFile } from "node:fs/promises";
+   6  import { existsSync } from "node:fs";
+   7  import path from "node:path";
+   8  import { setTimeout as sleep } from "node:timers/promises";
+   9  
+  10  const ROOT = "_site";
+  11  const PORT = 8123;
+  12  const CDP_PORT = 9333;
+  13  const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  14  const BASE = process.env.SMOKE_BASE || `http://localhost:${PORT}`;
+  15  
+  16  const MIME = { ".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".mjs": "text/javascript", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff", ".xml": "application/xml", ".txt": "text/plain", ".json": "application/json", ".mp4": "video/mp4", ".glb": "model/gltf-binary", ".ktx2": "image/ktx2", ".wasm": "application/wasm" };
+  17  const server = createServer(async (req, res) => {
+  18    let p = decodeURIComponent(new URL(req.url, BASE).pathname);
+  19    if (p.endsWith("/")) p += "index.html";
+  20    const file = path.join(ROOT, p);
+  21    try {
+  22      const data = await readFile(file);
+  23      res.writeHead(200, { "content-type": MIME[path.extname(file)] || "application/octet-stream" });
+  24      res.end(data);
+  25    } catch {
+  26      res.writeHead(404); res.end("not found");
+  27    }
+  28  });
+  29  if (!process.env.SMOKE_BASE) {
+  30    if (!existsSync(ROOT)) { console.error(`no ${ROOT}/ — run the build first`); process.exit(1); }
+  31    await new Promise((r) => server.listen(PORT, r));
+  32  }
+  33  
+  34  const chrome = spawn(CHROME, [
+  35    "--headless=new", `--remote-debugging-port=${CDP_PORT}`, "--window-size=1440,900",
+  36    "--hide-scrollbars", "--enable-unsafe-swiftshader", "--use-gl=angle", "--use-angle=swiftshader",
+  37    // macOS headless can stop VSync callbacks (including media-query changes)
+  38    // while timers keep running. The site still owns its 30 fps rendering cap.
+  39    "--disable-frame-rate-limit", "--disable-background-timer-throttling",
+  40    "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
+  41    "--no-first-run", `--user-data-dir=/tmp/axon-smoke-profile-${Date.now()}`, "about:blank",
+  42  ], { stdio: "ignore" });
+  43  process.once("exit", () => chrome.kill());
+  44  
+  45  async function wsUrl() {
+  46    for (let i = 0; i < 40; i++) {
+  47      try {
+  48        const j = await (await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`)).json();
+  49        if (j.webSocketDebuggerUrl) return j.webSocketDebuggerUrl;
+  50      } catch {}
+  51      await sleep(150);
+  52    }
+  53    throw new Error("Chrome CDP not ready");
+  54  }
+  55  const ws = new WebSocket(await wsUrl());
+  56  await new Promise((res, rej) => { ws.addEventListener("open", res); ws.addEventListener("error", rej); });
+  57  
+  58  let mid = 0; const pending = new Map(); const exceptions = [];
+  59  ws.addEventListener("message", (ev) => {
+  60    const m = JSON.parse(ev.data);
+  61    if (m.id && pending.has(m.id)) { const { resolve, reject } = pending.get(m.id); pending.delete(m.id); m.error ? reject(new Error(JSON.stringify(m.error))) : resolve(m.result); }
+  62    if (m.method === "Runtime.exceptionThrown") exceptions.push(m.params?.exceptionDetails?.text || "exception");
+  63  });
+  64  const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => { const id = ++mid; pending.set(id, { resolve, reject }); ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); });
+  65  
+  66  const targets = await send("Target.getTargets");
+  67  const pageT = targets.targetInfos.find((t) => t.type === "page");
+  68  const { sessionId } = await send("Target.attachToTarget", { targetId: pageT.targetId, flatten: true });
+  69  const S = (m, p) => send(m, p, sessionId);
+  70  await S("Page.enable"); await S("Runtime.enable");
+  71  
+  72  const evalJs = async (expr) => {
+  73    const result = await S("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true });
+  74    if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);
+  75    return result.result?.value;
+  76  };
+  77  const go = async (url, settle = 2500) => { exceptions.length = 0; await S("Page.navigate", { url }); await sleep(settle); };
+  78  const metrics = (w, h, mobile = false) => S("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile });
+  79  
+  80  let failed = 0;
+  81  const check = (name, ok, extra = "") => { console.log(`${ok ? "PASS" : "FAIL"}  ${name}${ok ? "" : "  " + extra}`); if (!ok) failed++; };
+  82  
+  83  /* ---- 1 · page health and verification without ad serving ----
+  84     Utility/index/interactive pages do not opt into ads. Article serving also
+  85     remains disabled in site.js until approval and consent setup are ready. */
+  86  const AD_PAGES = new Set();
+  87  for (const p of ["/", "/axon.html", "/about.html", "/lab.html", "/game.html", "/contact.html", "/privacy.html", "/terms.html", "/checkout.html?plan=hobby", "/anime.html", "/projects.html", "/blog/"]) {
+  88    await metrics(1440, 900);
+  89    await go(BASE + p, 3200);
+  90    check(`${p} no JS exceptions`, exceptions.length === 0, JSON.stringify(exceptions.slice(0, 3)));
+  91    check(`${p} title`, !!(await evalJs("document.title")));
+  92    check(`${p} canonical`, !!(await evalJs(`document.querySelector('link[rel="canonical"]')?.href`)));
+  93    check(`${p} og:image absolute`, String(await evalJs(`document.querySelector('meta[property="og:image"]')?.content`)).startsWith("https://stackwith.me/"));
+  94    const hasAd = await evalJs(`!!document.querySelector('script[src*="pagead2"]')`);
+  95    check(`${p} ad tag ${AD_PAGES.has(p) ? "present (content page)" : "absent (no/low content)"}`, hasAd === AD_PAGES.has(p));
+  96    check(`${p} publisher verification`, (await evalJs(`document.querySelector('meta[name="google-adsense-account"]')?.content`)) === "ca-pub-7262404901375077");
+  97    check(`${p} no obsolete consent banner`, !(await evalJs(`!!document.querySelector('aside.consent')`)));
+  98    await evalJs("localStorage.clear()");
+  99  }
+ 100  
+ 101  /* ---- 2 · Impossible Atlas homepage ---- */
+ 102  const hubWait = (expression, timeout = 15000) => evalJs(`new Promise(resolve => { const start = performance.now(); const poll = () => (${expression}) ? resolve(true) : performance.now() - start > ${timeout} ? resolve(false) : setTimeout(poll, 100); poll(); })`);
+ 103  const hubReady = () => hubWait("window.__hubQ?.().ready");
+ 104  await go(BASE + "/", 2500);
+ 105  check("hub: scene renders", await hubReady());
+ 106  // Page health above already checks the first-visit consent surface. Dismiss it
+ 107  // through the real control before testing the visible project and motion links.
+ 108  await evalJs('document.querySelector(".consent .btn--ghost")?.click()');
+ 109  check("hub: four project destinations", (await evalJs('[...document.querySelectorAll("a[data-unit]")].map(a => a.getAttribute("href")).join(",")')) === "/anime.html,/lab.html,/game.html,/axon.html");
+ 110  check("hub: four readable story chapters", await evalJs('document.querySelectorAll(".worlds__chapter").length === 4 && [...document.querySelectorAll(".worlds__chapter")].every(c => c.textContent.trim().length > 100 && c.querySelector("a[href]"))'));

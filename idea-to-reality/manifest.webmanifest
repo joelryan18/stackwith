@@ -1,0 +1,21 @@
+{
+  "id": "/idea-to-reality/",
+  "name": "Idea to Reality — MVP Planner",
+  "short_name": "Idea to Reality",
+  "description": "Make a realistic first-release plan. Save projects, test assumptions and keep building offline.",
+  "lang": "en",
+  "start_url": "/idea-to-reality/",
+  "scope": "/idea-to-reality/",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#2345e8",
+  "categories": ["productivity", "business"],
+  "icons": [
+    { "src": "/assets/images/idea-to-reality/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/images/idea-to-reality/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Plan a first release", "url": "/idea-to-reality/#planner" },
+    { "name": "Read the playbooks", "url": "/idea-to-reality/#playbooks" }
+  ]
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"/> <meta name="viewport" content="width=device-width,initial-scale=1"/> <title>Make a WebGL page useful when the scene cannot run — stackwith.me</title> <meta name="description" content="Build the reading page first, enhance it after a real frame, and handle disabled scripts, reduced motion, failed assets, and lost graphics contexts."/> <meta name="google-adsense-account" content="ca-pub-7262404901375077"/> <link rel="canonical" href="https://stackwith.me/blog/webgl-no-js-fallback.html"/> <meta property="og:type" content="article"/> <meta property="og:url" content="https://stackwith.me/blog/webgl-no-js-fallback.html"/> <meta property="og:title" content="Make a WebGL page useful when the scene cannot run — stackwith.me"/> <meta property="og:description" content="Build the reading page first, enhance it after a real frame, and handle disabled scripts, reduced motion, failed assets, and lost graphics contexts."/> <meta property="og:image" content="https://stackwith.me/og.png"/> <meta property="og:image:width" content="1200"/> <meta property="og:image:height" content="630"/> <meta property="og:image:type" content="image/png"/> <meta property="og:site_name" content="stackwith.me"/> <meta name="twitter:card" content="summary_large_image"/> <meta name="twitter:title" content="Make a WebGL page useful when the scene cannot run — stackwith.me"/> <meta name="twitter:description" content="Build the reading page first, enhance it after a real frame, and handle disabled scripts, reduced motion, failed assets, and lost graphics contexts."/> <meta name="twitter:image" content="https://stackwith.me/og.png"/> <meta name="theme-color" content="#07080A"/> <meta property="article:published_time" content="2026-07-22"/> <meta property="article:modified_time" content="2026-10-28"/> <meta property="article:author" content="Joel Ryan"/> <meta property="article:section" content="Browser engineering"/> <meta property="og:locale" content="en_US"/> <script> window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied',
+    ad_personalization: 'denied', analytics_storage: 'denied',
+    wait_for_update: 800
+  }); </script> <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307080A'/%3E%3Cpath d='M4 16h6l3-8 6 16 3-8h6' fill='none' stroke='%23B8FF3C' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E"/> <link rel="apple-touch-icon" href="/apple-touch-icon.png"/> <link rel="manifest" href="/site.webmanifest"/> <link rel="alternate" type="application/atom+xml" title="stackwith.me Field Notes" href="/blog/feed.xml"/> <meta name="author" content="Joel Ryan"/> <link rel="preload" href="/assets/fonts/ClashDisplay-500.woff2" as="font" type="font/woff2" crossorigin/> <link rel="preload" href="/assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin/> <link rel="preload" href="/assets/fonts/JetBrainsMono-400.woff2" as="font" type="font/woff2" crossorigin/> <link rel="stylesheet" href="/assets/styles.VMX4NJMP.css"/> <link rel="stylesheet" href="/assets/notes/notes.css"/> <noscript><style> body::before { display: none !important; }        /* never trap behind the boot veil */
+    body.anim [data-reveal] { opacity: 1 !important; transform: none !important; }
+    .nerve, .nerve-scrim, .probe { display: none !important; } </style></noscript> <script type="application/ld+json"> {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "stackwith.me",
+    "url": "https://stackwith.me",
+    "description": "Joel Ryan's software workshop: browser experiments and practical notes on rendering, reliability, and interface design.",
+    "inLanguage": "en",
+    "author": {
+      "@type": "Person",
+      "name": "Joel Ryan",
+      "url": "https://stackwith.me/about.html#author"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Joel Ryan",
+      "url": "https://stackwith.me/about.html#author"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://stackwith.me/blog/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  } </script> </head> <body class="no3d page ed notes note-page"> <a class="skip-link" href="#main">Skip to content</a> <header class="nav is-scrolled"> <a href="/" class="nav__brand" aria-label="stackwith.me home"> <span class="nav__mark" aria-hidden="true"> <svg viewBox="0 0 28 28"><path d="M2 14h5l3-7 6 14 3-7h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg> </span> <span class="nav__word">STACKWITH.ME</span> </a> <nav class="nav__links" aria-label="Primary"> <a href="/blog/" aria-current="page">Notes</a> <a href="/projects.html">Projects</a> <a href="/about.html">About</a> </nav> <div class="nav__right"> <a href="/contact.html" class="btn btn--ghost">Contact</a> </div> <details class="site-menu"> <summary>Menu <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg></summary> <nav class="site-menu__links" aria-label="Primary menu"> <a href="/blog/" aria-current="page">Notes</a> <a href="/projects.html">Projects</a> <a href="/about.html">About</a> <a href="/contact.html">Contact</a> </nav> </details> <script> (() => {
+  const menu = document.currentScript.previousElementSibling;
+  const trigger = menu.querySelector('summary');
+  menu.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && menu.open) {
+      event.preventDefault();
+      menu.open = false;
+      trigger.focus();
+    }
+  });
+  menu.addEventListener('click', event => {
+    if (event.target.closest('a[href]')) menu.open = false;
+  });
+  document.addEventListener('pointerdown', event => {
+    if (menu.open && !menu.contains(event.target)) menu.open = false;
+  });
+  menu.addEventListener('focusout', event => {
+    if (event.relatedTarget && !menu.contains(event.relatedTarget)) menu.open = false;
+  });
+})(); </script> </header> <main id="main" class="doc notes-main" tabindex="-1"> <div class="reading-progress" aria-hidden="true"><div class="reading-progress__bar" id="readBar"></div></div> <article class="note-article" id="noteArticle"> <header class="note-header"> <p class="note-breadcrumb"><a href="/blog/">Field notes</a><span aria-hidden="true">/</span>Browser engineering</p> <h1>Make a WebGL page useful when the scene cannot run</h1> <div class="post-meta"> <span>Published by <a href="/about.html#author" rel="author">Joel Ryan</a></span> <span><time datetime="2026-07-22">22 Jul 2026</time></span> <span>Updated <time datetime="2026-10-28">28 Oct 2026</time></span> <span>5 min read</span> </div> <aside class="post-context" aria-label="About this guide"> <p class="post-kind">Implementation guide</p> <p>This guide follows the current Lab page and gives an adaptable loading pattern. The reading version explains the project; it does not reproduce every 3D interaction.</p> </aside> </header> <nav class="post-toc" aria-label="On this page"> <p class="post-toc__title">On this page</p> <ol><li><a href="#layers">Separate preference, failure, and capability</a></li><li><a href="#html">Make the initial HTML worth reading</a></li><li><a href="#css">Hide enhancements until they work</a></li><li><a href="#runtime">Give startup and disposal a shared owner</a></li><li><a href="#smoke">Test the reading path directly</a></li><li><a href="#limits">What a reading version cannot provide</a></li><li><a href="#sources">Sources &amp; revision</a></li></ol> </nav> <div class="note-body"><p>A visitor opens a WebGL page on a train, the model download fails, and the loading screen never goes away. The HTTP request succeeded, but the page has failed its user. The useful starting point is a document that explains the project and offers working navigation before a renderer exists.</p> <p>In <a href="/lab.html?view=reading">the Lab’s reading view</a>, the chapters are HTML. The canvas, loading overlay, sound controls, and camera enhance that document. This separation also makes it possible to describe and link to the project when scripts are disabled.</p> <h2 id="layers">Separate preference, failure, and capability</h2> <p>Reduced motion is a preference, not a failed graphics test. A lost WebGL context is a runtime failure, not evidence that the visitor has a slow device. Treating both as one “unsupported” state produces confusing messages and can restart motion that the visitor deliberately turned off.</p> <div class="table-scroll" tabindex="0" role="region" aria-label="Reading paths by condition"><table> <caption>What the page should do in each situation</caption> <thead><tr><th scope="col">Condition</th><th scope="col">Useful response</th></tr></thead><tbody> <tr><td>JavaScript disabled or module unavailable</td><td>Keep the initial document readable without running recovery code.</td></tr> <tr><td>Reduced motion or an explicit reading choice</td><td>Start with the still presentation and an accurate explanation.</td></tr> <tr><td>Asset loading fails</td><td>Release the loader, preserve the article, and offer a deliberate retry if supported.</td></tr> <tr><td>Loading takes too long</td><td>Provide a keyboard-accessible way to skip it.</td></tr> <tr><td>Context lost after startup</td><td>Stop the rendering path and restore usable content and controls.</td></tr> </tbody></table></div> <p>The current <code>lab3d.js</code> checks reduced motion, data-saving preference, and <code>?view=reading</code> before starting the world. Its <code>webglcontextlost</code> handler uses the same <code>no3d()</code> recovery path as startup failure. See the source excerpt below for the actual selectors and conditions.</p> <h2 id="html">Make the initial HTML worth reading</h2> <p>A useful fallback answers the same first questions as the interactive page: what is this project, what can I do here, and where can I learn more? “Enable JavaScript” answers none of them. The Lab’s HTML contains a sequence of chapters and links; it does not depend on a successful canvas boot to acquire a title or purpose.</p> <pre tabindex="0" aria-label="Code example, scroll horizontally if needed"><code>&lt;main id="main"&gt;
+  &lt;h1&gt;Deep Signal&lt;/h1&gt;
+  &lt;p&gt;A browser experiment in light, matter, and memory.&lt;/p&gt;
+  &lt;section aria-labelledby="quartz-title"&gt;
+    &lt;h2 id="quartz-title"&gt;Quartz&lt;/h2&gt;
+    &lt;p&gt;Explain the specimen and its interaction here.&lt;/p&gt;
+  &lt;/section&gt;
+  &lt;a href="/blog/"&gt;Read the engineering notes&lt;/a&gt;
+&lt;/main&gt;</code></pre> <p>This is a shortened structural example, not a second copy of the Lab. A decorative canvas can be hidden from assistive technology with <code>aria-hidden="true"</code>. Information and controls that exist only in the canvas need an actual alternative; an ARIA label on a complex scene does not make its interactions accessible.</p> <h2 id="css">Hide enhancements until they work</h2> <p>Prefer a default state in which content is visible and enhancements are optional. If a module fails to import, none of its catch handlers can run. A design that hides the document on parse and waits for the module to reveal it has already lost its recovery path.</p> <p>Use a successful-render state to reveal the scene. Keep essential links and reading content available. In the Lab layout, a <code>&lt;noscript&gt;</code> style also removes the intro and scene controls. That handles intentionally disabled scripts; the default CSS still needs to handle scripts that were enabled but failed.</p> <pre tabindex="0" aria-label="Code example, scroll horizontally if needed"><code>/* An adaptable pattern: the article remains visible throughout. */
+.scene-layer { visibility: hidden; }
+.has-scene .scene-layer { visibility: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-layer { display: none; }
+}</code></pre> <p>Do not make a “Skip intro” control available only after the large scene bundle finishes loading. Put it in the initial HTML and wire a small, independent handler if skipping needs JavaScript. A stalled loader must not hold the entire page’s navigation hostage.</p> <h2 id="runtime">Give startup and disposal a shared owner</h2> <p>A loader timeout creates a race: the visitor chooses reading mode, then an old model request completes and reopens the scene. A cancellation flag or generation token should be checked after each awaited load. Dispose of an abandoned result rather than attaching it to the page.</p> <pre tabindex="0" aria-label="Code example, scroll horizontally if needed"><code>// Adapt this to the renderer and resource ownership in your app.
+let generation = 0;
+let world = null;
+
+function useReadingView() {
+  generation++;
+  world?.dispose();
+  world = null;
+  document.body.classList.remove("has-scene");
+}
+
+async function enableScene() {
+  const mine = ++generation;
+  try {
+    const candidate = await buildWorld();
+    if (mine !== generation) {
+      candidate.dispose();
+      return;
+    }
+    world?.dispose();
+    world = candidate;
+    world.renderFirstFrame();
+    document.body.classList.add("has-scene");
+  } catch {
+    // An old failure must not cancel a newer startup.
+    if (mine === generation) useReadingView();
+  }
+}
+
+enableScene();</code></pre> <p>Here <code>buildWorld()</code>, <code>dispose()</code>, and <code>renderFirstFrame()</code> are application contracts, not browser APIs. Rendering code must also detect context loss. Disposal includes owned animation callbacks, listeners, GPU resources, and audio; merely hiding the canvas leaves that work running.</p> <h2 id="smoke">Test the reading path directly</h2> <p>Start a fresh page with JavaScript disabled. Then test a fresh page with reduced motion, one with the model request blocked, and one in which you skip loading before the request completes. Check that the title, chapter text, contact link, and keyboard navigation still work. A text-length assertion alone cannot tell you whether the document is useful.</p> <p>For the running scene, deliberately lose the context in a local test, where the browser exposes <code>WEBGL_lose_context</code>, and inspect recovery. Do not assume a screenshot of a still poster validates loader cancellation or focus management.</p> <p>The repository has a browser smoke harness, but its deployment workflow currently runs the build without that harness. Running a check and wiring a check into deployment are separate tasks. The <a href="/blog/smoke-testing-with-cdp.html">browser-testing note</a> explains how to keep those claims separate.</p> <h2 id="limits">What a reading version cannot provide</h2> <p>A written description of an arena is not a keyboard or touch alternative to playing it. A still image cannot convey every spatial relationship in a moving scene. Be specific about what remains available, and keep instructions synchronized with the current project. The test of this page is whether someone can learn from it and navigate onward even when its most ambitious enhancement is unavailable.</p> </div> <section class="note-sources" aria-labelledby="sources"> <h2 id="sources">Sources &amp; revision</h2> <p><a href="/assets/notes/source/fallback.txt">Read the dated source excerpt</a>. It includes original file paths, line numbers, and SHA-256 hashes for the version used in this guide. The <a href="https://github.com/joelryan18/stackp.github.io">public repository</a> may contain a different revision.</p> <ul><li><a href="https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html">WCAG: pause, stop, hide</a></li><li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion">MDN: prefers-reduced-motion</a></li><li><a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/webglcontextlost_event">MDN: webglcontextlost</a></li></ul> <p><strong>28 Oct 2026:</strong> Replaced descriptions of the older crystal-shaft layout and removed the unsupported claim that deployment automatically runs fallback tests.</p> <p>These notes use AI assistance. <a href="/editorial.html">Read the editorial method and corrections policy</a>. Found an error? <a href="mailto:hello@stackwith.me?subject=Correction%3A%20Make%20a%20WebGL%20page%20useful%20when%20the%20scene%20cannot%20run">Send a correction with this article’s title</a>.</p> </section> <div class="share-bar"> <button class="share-bar__btn" id="copyLink" type="button" hidden>Copy article link</button> <span class="share-bar__feedback" id="copyFeedback" role="status"></span> </div> </article> <aside class="post-author-bio" aria-label="About the publisher"> <p class="post-author-bio__name"><a href="/about.html#author" rel="author">Joel Ryan</a></p> <p class="post-author-bio__blurb">Runs stackwith.me, an independent browser-software workshop in India. The notes document implementation choices, worked examples, and the limits of the projects.</p> <p class="post-author-bio__links"><a href="/about.html#author">About Joel</a><a href="/editorial.html">How these notes are made</a><a href="/contact.html">Contact</a></p> </aside> <aside class="post-footer" aria-labelledby="related-title"> <h2 id="related-title">Continue with a related problem</h2> <div class="post-related"> <a href="/blog/smoke-testing-with-cdp.html"><span class="post-related__meta">Browser engineering</span><h3>Test a WebGL page without mistaking a hook for proof</h3><p>Use browser diagnostics, bounded polling, rendered inspection, and recorded source versions to distinguish a successful build from a working WebGL experience.</p></a> <a href="/blog/webgl-adaptive-quality-governor.html"><span class="post-related__meta">Rendering</span><h3>A WebGL quality governor that measures its own limits</h3><p>Inspect the Lab’s real quality thresholds, calculate the pixel cost of DPR, and distinguish frame pacing from GPU time before changing rendering quality.</p></a> </div> </aside> <script type="application/ld+json"> {
+  "@context": "https://schema.org", "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "stackwith.me", "item": "https://stackwith.me/" },
+    { "@type": "ListItem", "position": 2, "name": "Field notes", "item": "https://stackwith.me/blog/" },
+    { "@type": "ListItem", "position": 3, "name": "Make a WebGL page useful when the scene cannot run", "item": "https://stackwith.me/blog/webgl-no-js-fallback.html" }
+  ]
+} </script> <script type="application/ld+json"> {
+  "@context": "https://schema.org", "@type": "BlogPosting",
+  "@id": "https://stackwith.me/blog/webgl-no-js-fallback.html#article",
+  "url": "https://stackwith.me/blog/webgl-no-js-fallback.html",
+  "mainEntityOfPage": { "@type": "WebPage", "@id": "https://stackwith.me/blog/webgl-no-js-fallback.html" },
+  "headline": "Make a WebGL page useful when the scene cannot run",
+  "description": "Build the reading page first, enhance it after a real frame, and handle disabled scripts, reduced motion, failed assets, and lost graphics contexts.",
+  "datePublished": "2026-07-22", "dateModified": "2026-10-28",
+  "inLanguage": "en", "wordCount": 957,
+  "keywords": "WebGL accessibility no JavaScript noscript reduced motion context loss loading cancellation fallback", "articleSection": "Browser engineering",
+  "author": { "@type": "Person", "@id": "https://stackwith.me/about.html#author", "name": "Joel Ryan", "url": "https://stackwith.me/about.html#author" },
+  "publisher": { "@type": "Person", "name": "Joel Ryan", "url": "https://stackwith.me/about.html#author" },
+  "image": "https://stackwith.me/og.png",
+  "isAccessibleForFree": true
+} </script> </main> <footer class="footer"> <div class="footer__cols"> <div> <h4>PROJECTS</h4> <a href="/projects.html">All projects</a> <a href="/axon.html">AXON</a> <a href="/anime.html">Stackime</a> <a href="/lab.html">The Lab</a> <a href="/game.html">Signal Strike</a> <a href="/orbit.html">Orbit</a> </div> <div> <h4>WRITING</h4> <a href="/blog/">Field notes</a> <a href="/editorial.html">Editorial &amp; corrections</a> <a href="/blog/feed.xml">RSS feed</a> </div> <div> <h4>WORKSHOP</h4> <a href="/idea-to-reality/">Idea to Reality</a> <a href="/about.html">About Joel</a> <a href="/contact.html">Contact</a> </div> <div> <h4>LEGAL</h4> <a href="/privacy.html">Privacy</a> <a href="/terms.html">Terms</a> </div> </div> <div class="footer__base"> <span>© <span id="year">2026</span> Joel Ryan</span> <span><a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a> · <a href="/about.html">About</a> · <a href="/contact.html">Contact</a></span> <span>Browser experiments &amp; engineering notes</span> </div> </footer> <script src="/assets/consent.OS4TYSHG.js" defer="defer"></script> <script src="/assets/blog.ZYK6EVRL.js" defer="defer"></script> <script>document.getElementById("year").textContent = new Date().getFullYear();</script> </body> </html> 

@@ -1,0 +1,100 @@
+stackwith.me — instancing reference excerpts
+Source snapshot: 2026-10-28
+
+These are excerpts from the local source used to prepare this edition.
+They describe code, not a successful browser test or the state of a live service.
+Line numbers refer to the original file. Full-file SHA-256 identifies that version.
+
+
+File: src/assets/js/lab-ice.js
+SHA-256: 4d27ceba0c7cd6ea78769efc97d65ff14838710ec3d04374f0ad7e39ff8b93f9
+Lines 191–224
+
+ 191    own(chamberLight.shadow);
+ 192  
+ 193    const dummy=new THREE.Object3D();
+ 194    const batches=[];
+ 195    let iceTriangles=0;
+ 196    for(let variant=0;variant<variantCount;variant++) {
+ 197      const members=poses.filter(p=>p.family===variant);
+ 198      const geometry=sculpt(variant,divisions,variant<rows.length?rows[variant]:null,variant===vaultFamily),seeds=new Float32Array(members.length),energy=new Float32Array(members.length);
+ 199      const mesh=new THREE.InstancedMesh(geometry,material,members.length);
+ 200      mesh.name=`Sculpted frost course ${variant+1}`;
+ 201      mesh.castShadow=true;mesh.receiveShadow=true;mesh.frustumCulled=false;
+ 202      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+ 203      members.forEach((p,i)=>{seeds[i]=p.seed;});
+ 204      geometry.setAttribute("aSeed",new THREE.InstancedBufferAttribute(seeds,1));
+ 205      geometry.setAttribute("aEnergy",new THREE.InstancedBufferAttribute(energy,1).setUsage(THREE.DynamicDrawUsage));
+ 206      iceTriangles+=geometry.index.count/3*members.length;
+ 207      group.add(mesh);batches.push({mesh,members,energy});
+ 208    }
+ 209  
+ 210    const debrisCount=phone?3:5;
+ 211    const debrisGeometry=sculpt(7,phone?8:14);
+ 212    const debris=new THREE.InstancedMesh(debrisGeometry,material,debrisCount);
+ 213    const debrisSeeds=new Float32Array(debrisCount);
+ 214    for(let i=0;i<debrisCount;i++) {
+ 215      const a=(i%2?1:-1)*(1.55+random()*.55),r=6.8+random()*4.3;
+ 216      const x=Math.sin(a)*r,z=Math.cos(a)*r;
+ 217      dummy.scale.set(.22+random()*.6,.14+random()*.24,.26+random()*.48);
+ 218      dummy.position.set(x,heightAt(x,z)+dummy.scale.y*.30,z);
+ 219      dummy.rotation.set(random()*.22,random()*6.28,random()*.16,"YXZ");
+ 220      dummy.updateMatrix();debris.setMatrixAt(i,dummy.matrix);debrisSeeds[i]=random();
+ 221    }
+ 222    debrisGeometry.setAttribute("aSeed",new THREE.InstancedBufferAttribute(debrisSeeds,1));
+ 223    debrisGeometry.setAttribute("aEnergy",new THREE.InstancedBufferAttribute(new Float32Array(debrisCount),1));
+ 224    debris.castShadow=true;debris.receiveShadow=true;debris.instanceMatrix.needsUpdate=true;
+
+
+File: src/assets/js/lab-journey.js
+SHA-256: 6c78ca4fb423ac4832c0f36ad1d00636f6ce836a3081db2a0ba600e6206068a5
+Lines 186–233
+
+ 186    const particleMaterial = own(new THREE.ShaderMaterial({
+ 187      uniforms: particleU,
+ 188      vertexShader: `
+ 189        attribute float aSeed;attribute vec3 aOrigin,aSurfaceNormal;uniform float uTime,uCharge,uAssemble,uWave;
+ 190        varying vec3 vNormal,vMacroNormal,vView;varying float vLight;
+ 191        void main(){
+ 192          vec3 origin=aOrigin;float age=uTime-uWave;
+ 193          float wave=step(0.,age)*exp(-pow((length(origin)-age*7.)*1.3,2.))*exp(-age*1.2);
+ 194          vec3 drift=normalize(origin+vec3(.001))*(1.-uAssemble)*(1.2+aSeed*3.);
+ 195          drift+=normalize(origin+vec3(.001))*(uCharge*.11+wave*.65);
+ 196          drift+=sin(vec3(aSeed*47.,aSeed*71.,aSeed*29.)+uTime*.8)*(.007+uCharge*.016);
+ 197          vec4 p=instanceMatrix*vec4(position,1.);p.xyz+=drift;
+ 198          vNormal=normalize(mat3(modelMatrix)*mat3(instanceMatrix)*normal);
+ 199          vMacroNormal=normalize(mat3(modelMatrix)*aSurfaceNormal);
+ 200          vView=cameraPosition-(modelMatrix*p).xyz;
+ 201          vLight=aSeed*.09+uCharge*.20+wave*.65;
+ 202          gl_Position=projectionMatrix*modelViewMatrix*p;
+ 203        }`,
+ 204      fragmentShader: `
+ 205        varying vec3 vNormal,vMacroNormal,vView;varying float vLight;
+ 206        void main(){
+ 207          vec3 key=normalize(vec3(.54,.71,-.45));
+ 208          float mass=pow(max(dot(normalize(vMacroNormal),key),0.),.75);
+ 209          float facet=.74+.26*max(dot(normalize(vNormal),key),0.);
+ 210          float rim=pow(1.-max(dot(normalize(vMacroNormal),normalize(vView)),0.),3.);
+ 211          vec3 color=mix(vec3(.030,.043,.073),vec3(.36,.43,.53),mass)*facet;
+ 212          color+=vec3(.035,.055,.085)*rim+vec3(.24,.36,.50)*vLight;
+ 213          gl_FragColor=vec4(color,1.);
+ 214        }`,
+ 215    }));
+ 216    const grains = new THREE.InstancedMesh(particleGeometry, particleMaterial, particleCount);
+ 217    grains.name = "Source frost grains"; grains.frustumCulled = false;
+ 218    for (let i = 0; i < particleCount; i++) {
+ 219      sampler.sample(point, face);
+ 220      point.addScaledVector(face, (random() - .2) * .10);
+ 221      seeds[i] = random(); origins.set(point.toArray(), i * 3); surfaceNormals.set(face.toArray(), i * 3);
+ 222      dummy.position.copy(point);
+ 223      dummy.rotation.set(random() * 3, random() * 3, random() * 3);
+ 224      dummy.scale.setScalar(.65 + random() * .85); dummy.updateMatrix();
+ 225      grains.setMatrixAt(i, dummy.matrix);
+ 226    }
+ 227    particleGeometry.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seeds, 1));
+ 228    particleGeometry.setAttribute("aOrigin", new THREE.InstancedBufferAttribute(origins, 3));
+ 229    particleGeometry.setAttribute("aSurfaceNormal", new THREE.InstancedBufferAttribute(surfaceNormals, 3));
+ 230    source.content.add(grains);
+ 231  
+ 232    const display = new THREE.Group();
+ 233    display.name = "Circular source display"; display.position.set(EXHIBIT_X[2], 6.80, 0);

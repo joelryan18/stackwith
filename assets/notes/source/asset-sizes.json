@@ -1,0 +1,36 @@
+{
+  "measured": "2026-10-28",
+  "method": "Filesystem byte lengths of the checked-in encoded files; no raw comparison or performance benchmark.",
+  "assets": [
+    {
+      "file": "lab-crystals.glb",
+      "bytes": 36420,
+      "sha256": "79b67d5e1a2b87729f6a3edabc144fb0d3505c62feabc2cf97a14d66aa0ed17e"
+    },
+    {
+      "file": "lab-matcap.ktx2",
+      "bytes": 443394,
+      "sha256": "cbe27b0332e2cb16722f336312a5d3708a3bbf742cf79d49053b272e7ca48d45"
+    },
+    {
+      "file": "lab-matcap-int.ktx2",
+      "bytes": 439188,
+      "sha256": "0aed110b5ec669fb43abc492a296a35ca9f7c58a521749fc499efb2017506e59"
+    },
+    {
+      "file": "about-instrument.glb",
+      "bytes": 35392,
+      "sha256": "9127d95c3bdb5635c2e0a37d1e3f7d263bd5ec6bd72d59113cdcf6d524c9bd41"
+    },
+    {
+      "file": "draco/draco_decoder.wasm",
+      "bytes": 192420,
+      "sha256": "a680d927bed9cb864ddbd63521868891af2bfbe755092761b4837487618df8ac"
+    },
+    {
+      "file": "basis/basis_transcoder.wasm",
+      "bytes": 499935,
+      "sha256": "79ae97d781e10a566659c689b7bb1de91726453f55f9f5e3bcc07a4e3904070f"
+    }
+  ]
+}

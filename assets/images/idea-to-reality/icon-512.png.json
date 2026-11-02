@@ -1,0 +1,13 @@
+{
+  "origin": "Original code-rendered Idea to Reality artwork, authored for stackwith.me. No sourced or AI-generated image content.",
+  "method": "Canvas route symbol; all marks within the maskable icon safe area.",
+  "generator": "outputs/idea-to-reality/generate-art.mjs",
+  "sourceHashes": {
+    "src/assets/js/reality-artifacts.js": "0b967ee4278694cb69d7dcd0d8cd63883538ddbf1e711adf781a2b8b3656e5a6",
+    "src/assets/js/reality-model.js": "13756234591d73e1f9fc96ba461a230d1f093f648cd8d535f357fd7930cb58b3",
+    "outputs/idea-to-reality/generate-art.mjs": "86f4f12a0849ebda160f5aeca54d47a83ef2bf8df74380df7cb66b4971573d8c"
+  },
+  "created": "2026-10-28T08:02:43.921Z",
+  "width": 512,
+  "height": 512
+}
